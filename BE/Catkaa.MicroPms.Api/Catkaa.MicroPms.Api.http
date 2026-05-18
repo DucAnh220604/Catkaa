@@ -1,0 +1,6 @@
+@Catkaa.MicroPms.Api_HostAddress = http://localhost:5096
+
+GET {{Catkaa.MicroPms.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

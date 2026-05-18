@@ -1,0 +1,215 @@
+/* --- Reset & Global --- */
+:root {
+  --catkaa-blue: #1686cb;
+  --catkaa-gold: #1686cb; 
+  --catkaa-bg: #F4F7FE;
+  --theme-color1: #1686cb !important;
+  --theme-color2: #1686cb !important;
+  --theme-color3: #1686cb !important;
+}
+
+/* Ép màu Primary của Bootstrap */
+.text-primary { color: #1686cb !important; }
+.bg-primary { background-color: #1686cb !important; }
+.btn-primary { background-color: #1686cb !important; border-color: #1686cb !important; }
+.btn-outline-primary { color: #1686cb !important; border-color: #1686cb !important; }
+.btn-outline-primary:hover { background-color: #1686cb !important; color: #fff !important; }
+
+/* Sửa màu tất cả các icon lnr và fa */
+.lnr, .fa, .fab, .fas, .fa-sharp { color: inherit; }
+.icon-box .icon, .service-block .icon { color: #1686cb !important; }
+
+/* Sửa màu đường kẻ và tiêu đề phụ */
+.sec-title .subtitle { color: #1686cb !important; }
+.sec-title .subtitle .dot { background-color: #1686cb !important; }
+.sec-title .title:after { background-color: #1686cb !important; }
+
+html {
+  scroll-behavior: smooth; /* Đảm bảo cuộn mượt toàn cục */
+}
+
+/* Sửa lỗi bo góc cho tất cả các nút của template */
+.theme-btn {
+  overflow: hidden !important;
+  border-radius: 50px !important; /* Ép kiểu bo tròn giống nút Header */
+}
+
+.theme-btn:before {
+  border-radius: 50px !important;
+}
+
+/* --- Container cho các trang Demo --- */
+.demo-wrapper {
+  background-color: var(--catkaa-bg);
+  min-height: 80vh;
+  padding: 60px 0;
+  overflow: hidden;
+}
+
+/* --- Guest Flow Custom Style (Fix lệch) --- */
+.phone-mockup {
+  width: 320px;
+  height: 640px;
+  background: #000;
+  border-radius: 45px;
+  border: 10px solid #1e293b;
+  position: relative;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.25);
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.phone-screen-content {
+  background: #fff;
+  height: 100%;
+  padding-top: 25px; /* Notch space */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-notch-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 25px;
+  background: #1e293b;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+  z-index: 100;
+}
+
+/* --- Admin Dashboard Layout --- */
+.admin-layout-fixed {
+  display: flex;
+  min-height: 100vh;
+  background: #F4F7FE;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  width: 100%;
+}
+
+.admin-sidebar-fixed {
+  width: 260px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  z-index: 1050;
+  transition: transform 0.3s ease;
+}
+
+.admin-content-shifted {
+  margin-left: 260px;
+  padding: 40px;
+  width: calc(100% - 260px);
+  min-height: 100vh;
+  flex-grow: 1;
+}
+
+@media (max-width: 991px) {
+  .admin-sidebar-fixed {
+    transform: translateX(-100%);
+  }
+  .admin-sidebar-fixed.show {
+    transform: translateX(0);
+  }
+  .admin-content-shifted {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+}
+
+/* Sidebar Nav */
+.nav-link-minimal {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 6px;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.nav-link-minimal:hover, .nav-link-minimal.active {
+  background: #eef2ff;
+  color: #16309F;
+  font-weight: 700;
+}
+
+/* Utility */
+.fw-900 { font-weight: 900; }
+.text-catkaa { color: var(--catkaa-blue) !important; }
+.text-gold { color: var(--catkaa-gold) !important; }
+.bg-catkaa { background-color: var(--catkaa-blue) !important; }
+.bg-gold { background-color: var(--catkaa-gold) !important; }
+.bg-primary-light { background-color: #EFF6FF !important; }
+.bg-success-light { background-color: #f0fff4 !important; }
+.bg-warning-light { background-color: #fffbeb !important; }
+.shadow-primary { box-shadow: 0 10px 15px -3px rgba(22, 48, 159, 0.2); }
+
+/* Làm chậm hiệu ứng nhún nhảy */
+.bounce-y {
+  animation: bounce-y 8s infinite alternate ease-in-out !important;
+}
+.bounce-x {
+  animation: bounce-x 10s infinite alternate ease-in-out !important;
+}
+@keyframes bounce-y {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-20px); }
+}
+@keyframes bounce-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-20px); }
+}
+
+/* Scroll to top button custom */
+.scroll-to-top {
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  background-color: var(--catkaa-blue) !important;
+}
+.scroll-to-top:hover {
+  background-color: var(--catkaa-gold) !important;
+  transform: translateY(-5px);
+}
+
+/* Thu nhỏ nút */
+.btn-small {
+  padding: 10px 25px !important;
+  min-height: 45px !important;
+}
+
+.btn-small .btn-title {
+  line-height: 25px !important;
+  font-size: 14px !important;
+}
+
+/* Nút quay lại kiểu trượt nhẹ nhàng */
+.btn-back-style {
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+.btn-back-style:before {
+  background-color: #e9ecef !important;
+}
+
+.btn-back-style:hover .btn-title {
+  color: #000 !important;
+}
+
+/* Scroll to top button custom */

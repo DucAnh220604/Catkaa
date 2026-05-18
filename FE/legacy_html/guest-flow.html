@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CATKAA | Guest Check-in Flow</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/style.css" rel="stylesheet" />
+    <link href="/src/custom.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="background: #f4f7f9">
+    <div class="page-wrapper">
+      <header class="main-header header-style-one style-one">
+        <div class="header-lower">
+          <div class="xl-container">
+            <div class="main-box">
+              <div class="logo-box">
+                <div class="logo">
+                  <a
+                    href="index.html"
+                    class="catkaa-logo-container"
+                    style="text-decoration: none"
+                  >
+                    <img
+                      src="/images/favicon.png"
+                      alt="CATKAA"
+                      class="catkaa-logo-img"
+                    />
+                    <div class="catkaa-brand-group">
+                      <span class="catkaa-brand-name">CATKAA</span>
+                      <span class="catkaa-slogan"
+                        >LEGAL FOUNDATION, FREEDOM OF OPERATION</span
+                      >
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="guest-container">
+        <!-- Step 1: Pre-arrival -->
+        <div id="step-0" class="step-content active text-center">
+          <h2 class="mb-4">Chào mừng bạn!</h2>
+          <p>Vui lòng hoàn tất thủ tục để nhận phòng.</p>
+          <button
+            id="btn-checkin"
+            class="theme-btn btn-style-one"
+            style="width: 100%; padding: 20px"
+          >
+            <span class="btn-title">LÀM THỦ TỤC NHẬN PHÒNG / CHECK-IN NOW</span>
+          </button>
+        </div>
+
+        <!-- Step 2: Upload ID -->
+        <div id="step-1" class="step-content text-center">
+          <h3>Chụp ảnh CCCD</h3>
+          <p>Vui lòng đưa CCCD vào khung hình để hệ thống tự động nhận diện.</p>
+          <div class="ocr-scanner">
+            <div class="scanner-line"></div>
+            <img
+              src="https://via.placeholder.com/300x180?text=Dat+CCCD+tai+day"
+              style="margin-top: 35px; opacity: 0.5"
+            />
+          </div>
+          <button id="btn-upload-id" class="theme-btn btn-style-one">
+            <span class="btn-title">CHỤP & TẢI LÊN</span>
+          </button>
+        </div>
+
+        <!-- Step 3: eKYC Selfie -->
+        <div id="step-2" class="step-content text-center">
+          <h3>Xác thực khuôn mặt</h3>
+          <p>Vui lòng nhìn thẳng vào camera.</p>
+          <div class="ekyc-frame">
+            <i class="fa fa-user" style="font-size: 80px; color: #ccc"></i>
+          </div>
+          <button id="btn-verify" class="theme-btn btn-style-one">
+            <span class="btn-title">XÁC THỰC</span>
+          </button>
+        </div>
+
+        <!-- Step 4: Payment -->
+        <div id="step-3" class="step-content text-center">
+          <h3>Thanh toán</h3>
+          <p>Vui lòng quét mã QR để hoàn tất thanh toán.</p>
+          <div class="mb-4">
+            <img
+              src="https://via.placeholder.com/200?text=VietQR+Mockup"
+              class="img-fluid"
+              style="border: 1px solid #ddd; border-radius: 10px"
+            />
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              id="btn-paid"
+              class="theme-btn btn-style-one"
+              style="flex: 1"
+            >
+              <span class="btn-title">ĐÃ THANH TOÁN</span>
+            </button>
+            <button
+              id="btn-skip"
+              class="theme-btn btn-style-two"
+              style="flex: 1"
+            >
+              <span class="btn-title">BỎ QUA</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 5: Receipt -->
+        <div id="step-4" class="step-content text-center">
+          <h3 class="text-success">Thành công!</h3>
+          <div
+            class="card p-3 my-4 text-left"
+            style="background: #f9f9f9; border: none"
+          >
+            <p><strong>Số phòng:</strong> 402</p>
+            <p>
+              <strong>Mã PIN cửa:</strong>
+              <span style="font-size: 24px; color: #2b82c9; font-weight: bold"
+                >123456</span
+              >
+            </p>
+            <p><strong>Wifi:</strong> CATKAA_402 (Pass: 88888888)</p>
+          </div>
+          <button
+            id="btn-save"
+            class="theme-btn btn-style-one"
+            style="width: 100%"
+          >
+            <span class="btn-title">LƯU VÀO ẢNH</span>
+          </button>
+        </div>
+      </main>
+
+      <footer class="text-center p-4">
+        <p>&copy; 2026 CATKAA - Nền tảng pháp lý Homestay</p>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/guest.ts"></script>
+  </body>
+</html>
