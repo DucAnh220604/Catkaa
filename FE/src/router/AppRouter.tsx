@@ -3,7 +3,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import Home from "../pages/Home";
 import GuestFlow from "../pages/GuestFlow";
+import GuestHistory from "../pages/GuestHistory";
 import OwnerDashboard from "../pages/OwnerDashboard";
+import PaymentResult from "../pages/PaymentResult";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Services from "../pages/Services";
@@ -48,7 +50,11 @@ const AppRouter: React.FC = () => {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="test-booking" element={<TestBooking />} />
+        <Route path="my-history" element={<GuestHistory />} />
       </Route>
+
+      {/* VNPay return page — standalone, no layout */}
+      <Route path="/payment-result" element={<PaymentResult />} />
 
       {/* Chỉ Dashboard Admin là chạy độc lập vì có Sidebar riêng */}
       <Route

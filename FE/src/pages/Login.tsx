@@ -37,7 +37,6 @@ const Login: React.FC = () => {
           ? "Tên đăng nhập hoặc mật khẩu không đúng"
           : raw || "Không thể đăng nhập";
       setError(errorMsg);
-      notify("loginError", "error");
     } finally {
       setLoading(false);
     }

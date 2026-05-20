@@ -30,11 +30,13 @@ export interface CheckInRecordResponse {
 // Dùng cho POST /api/hotels/{hotelId}/checkin-ocr (kết quả OCR check-in)
 export interface OcrCheckInResult {
   checkInRecordId: number;
+  bookingId: number;
   bookingCode: string;
   guestName: string;
   hotelId: number;
   roomId: number;
   checkInTime: string;
+  paymentUrl?: string;
 }
 
 export interface OcrCheckInResponse {

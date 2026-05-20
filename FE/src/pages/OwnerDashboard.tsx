@@ -26,6 +26,9 @@ import {
   ShieldCheck,
   ImageIcon,
   CalendarDays,
+  CreditCard,
+  BadgeCheck,
+  BadgeX,
 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import {
@@ -55,6 +58,7 @@ import {
   updateRoom,
 } from "../services/roomService";
 import BookingService, { type BookingResponse } from "../services/bookingService";
+import PaymentService, { type PaymentRecord } from "../services/paymentService";
 import { useMessage } from "../components/MessageContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -139,7 +143,7 @@ const stats = [
   },
 ];
 
-type DashboardView = "overview" | "legal" | "hotels" | "rooms" | "users" | "bookings";
+type DashboardView = "overview" | "legal" | "hotels" | "rooms" | "users" | "bookings" | "payments";
 
 const emptyHotelForm = {
   name: "",
@@ -215,6 +219,13 @@ const OwnerDashboard: React.FC = () => {
   const [viewBooking, setViewBooking] = useState<BookingResponse | null>(null);
   const [confirmDeleteBookingId, setConfirmDeleteBookingId] = useState<number | null>(null);
 
+  // Payment state
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentsError, setPaymentsError] = useState("");
+  const [paymentFilterHotelId, setPaymentFilterHotelId] = useState<string>("");
+  const [viewPayment, setViewPayment] = useState<PaymentRecord | null>(null);
+
   // Search & pagination
   const PAGE_SIZE = 8;
   const [search, setSearch] = useState("");
@@ -282,7 +293,7 @@ const OwnerDashboard: React.FC = () => {
   }, [view]);
 
   useEffect(() => {
-    if (view === "hotels" || view === "rooms" || view === "users" || view === "bookings")
+    if (view === "hotels" || view === "rooms" || view === "users" || view === "bookings" || view === "payments")
       void loadHotels();
     if (view === "hotels" || view === "rooms") void loadRooms();
     if (view === "users") void loadUsers();
@@ -290,6 +301,10 @@ const OwnerDashboard: React.FC = () => {
       void loadBookings();
       void loadRooms();
       setBookingFilterHotelId("");
+    }
+    if (view === "payments") {
+      void loadPayments();
+      setPaymentFilterHotelId("");
     }
     setSearch("");
     setPage(1);
@@ -404,7 +419,7 @@ const OwnerDashboard: React.FC = () => {
       password: "",
       email: user.email ?? "",
       role: user.role ?? "Host",
-      hotelId: String(user.hotelId || ""),
+      hotelId: String(user.hotels?.[0]?.id || ""),
     });
     setUsersError("");
     if (hotels.length === 0) await loadHotels();
@@ -631,6 +646,19 @@ const OwnerDashboard: React.FC = () => {
     }
   };
 
+  const loadPayments = async (filterHotelId?: number) => {
+    setPaymentsLoading(true);
+    setPaymentsError("");
+    try {
+      const data = await PaymentService.getPayments(filterHotelId);
+      setPayments(data);
+    } catch (err) {
+      setPaymentsError(err instanceof Error ? err.message : "Không tải được danh sách thanh toán");
+    } finally {
+      setPaymentsLoading(false);
+    }
+  };
+
   const handleDeleteBooking = (bookingId: number) => {
     setViewBooking(null);
     setConfirmDeleteBookingId(bookingId);
@@ -670,15 +698,32 @@ const OwnerDashboard: React.FC = () => {
 
   const getBookingStatusLabel = (status: string) => {
     const map: Record<string, { label: string; cls: string }> = {
-      Confirmed: { label: "Đã xác nhận", cls: "db-badge-host" },
-      CheckedIn: { label: "Đang ở", cls: "db-badge-active" },
-      Completed: { label: "Đã trả phòng", cls: "db-badge-done" },
-      Cancelled: { label: "Đã hủy", cls: "db-badge-cancel" },
+      Pending:   { label: "Chờ xác nhận", cls: "db-badge-pending" },
+      Confirmed: { label: "Đã xác nhận",  cls: "db-badge-host"    },
+      CheckedIn: { label: "Đang ở",        cls: "db-badge-active"  },
+      Completed: { label: "Đã trả phòng", cls: "db-badge-done"    },
+      Cancelled: { label: "Đã hủy",        cls: "db-badge-cancel"  },
+    };
+    return map[status] ?? { label: status, cls: "db-badge-done" };
+  };
+
+  const getPaymentStatusLabel = (status: string) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      Success: { label: "Thành công", cls: "db-badge-host" },
+      Failed:  { label: "Thất bại",   cls: "db-badge-cancel" },
+      Pending: { label: "Chờ xử lý",  cls: "db-badge-done" },
     };
     return map[status] ?? { label: status, cls: "db-badge-done" };
   };
 
   const q = search.toLowerCase();
+  const filteredPayments = payments.filter(
+    (p) =>
+      (p.guestName ?? "").toLowerCase().includes(q) ||
+      p.bookingCode.toLowerCase().includes(q) ||
+      (p.hotelName ?? "").toLowerCase().includes(q) ||
+      p.transactionId.toLowerCase().includes(q),
+  );
   const filteredBookings = bookings.filter(
     (b) =>
       b.guestName.toLowerCase().includes(q) ||
@@ -776,6 +821,7 @@ const OwnerDashboard: React.FC = () => {
         .db-badge{display:inline-flex;align-items:center;padding:.28rem .65rem;border-radius:999px;font-size:.68rem;font-weight:700;}
         .db-badge-active{background:#ecfdf5;color:#059669;}
         .db-badge-done{background:#f1f5f9;color:#64748b;}
+        .db-badge-pending{background:#fffbeb;color:#b45309;}
         .db-badge-admin{background:#ede9fe;color:#6d28d9;}
         .db-badge-host{background:#eff6ff;color:#1d4ed8;}
         .db-badge-cancel{background:#fff1f2;color:#e11d48;}
@@ -946,6 +992,12 @@ const OwnerDashboard: React.FC = () => {
                 <CalendarDays size={16} /> Đặt phòng
               </button>
               <button
+                onClick={() => setView("payments")}
+                className={`db-nav-btn ${view === "payments" ? "active" : ""}`}
+              >
+                <CreditCard size={16} /> Thanh toán
+              </button>
+              <button
                 onClick={() => setView("hotels")}
                 className={`db-nav-btn ${view === "hotels" ? "active" : ""}`}
               >
@@ -966,6 +1018,12 @@ const OwnerDashboard: React.FC = () => {
                 className={`db-nav-btn ${view === "bookings" ? "active" : ""}`}
               >
                 <CalendarDays size={16} /> Đặt phòng
+              </button>
+              <button
+                onClick={() => setView("payments")}
+                className={`db-nav-btn ${view === "payments" ? "active" : ""}`}
+              >
+                <CreditCard size={16} /> Thanh toán
               </button>
               <button
                 onClick={() => setView("users")}
@@ -1044,7 +1102,9 @@ const OwnerDashboard: React.FC = () => {
                       ? "Quản lý phòng"
                       : view === "bookings"
                         ? "Quản lý đặt phòng"
-                        : "Quản lý tài khoản"}
+                        : view === "payments"
+                          ? "Quản lý thanh toán"
+                          : "Quản lý tài khoản"}
               </h5>
               <div
                 style={{
@@ -1060,14 +1120,16 @@ const OwnerDashboard: React.FC = () => {
                 <ChevronRight size={9} />
                 <span style={{ color: "#1686cb", fontWeight: 600 }}>
                   {view === "overview"
-                    ? "Dashboard"
+                    ? "Tổng quan"
                     : view === "hotels"
                       ? "Khách sạn"
                       : view === "rooms"
                         ? "Phòng"
                         : view === "bookings"
                           ? "Đặt phòng"
-                          : "Tài khoản"}
+                          : view === "payments"
+                            ? "Thanh toán"
+                            : "Tài khoản"}
                 </span>
               </div>
             </div>
@@ -2012,7 +2074,7 @@ const OwnerDashboard: React.FC = () => {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#0f172a" }}>Danh sách đặt phòng</div>
                   <div style={{ fontSize: ".7rem", color: "#94a3b8", marginTop: "2px" }}>
-                    {bookings.length} booking{bookings.length !== 1 ? "s" : ""} tổng cộng
+                    {bookings.length} đặt phòng tổng cộng
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
@@ -2205,6 +2267,246 @@ const OwnerDashboard: React.FC = () => {
                       <button className="db-btn-primary" style={{ background: "linear-gradient(135deg,#dc2626,#b91c1c)", boxShadow: "0 4px 12px rgba(220,38,38,.28)" }} onClick={() => handleDeleteBooking(viewBooking.id)}>
                         Xóa booking
                       </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : view === "payments" ? (
+            /* ══ PAYMENTS ══ */
+            <div className="db-card">
+              {/* Stats summary */}
+              <div style={{ display: "flex", gap: ".75rem", padding: "1rem 1.4rem .25rem", flexWrap: "wrap" }}>
+                {[
+                  {
+                    label: "Tổng giao dịch",
+                    value: payments.length,
+                    color: "#1686cb",
+                    bg: "#eff6ff",
+                  },
+                  {
+                    label: "Thành công",
+                    value: payments.filter((p) => p.status === "Success").length,
+                    color: "#16a34a",
+                    bg: "#f0fdf4",
+                  },
+                  {
+                    label: "Doanh thu",
+                    value: payments.filter((p) => p.status === "Success").reduce((s, p) => s + p.amount, 0).toLocaleString("vi-VN") + " ₫",
+                    color: "#0f172a",
+                    bg: "#f8fafc",
+                  },
+                  {
+                    label: "Thất bại",
+                    value: payments.filter((p) => p.status === "Failed").length,
+                    color: "#dc2626",
+                    bg: "#fff1f2",
+                  },
+                ].map((s) => (
+                  <div key={s.label} style={{ background: s.bg, borderRadius: 10, padding: ".55rem .9rem", minWidth: 110, flex: "1 1 100px" }}>
+                    <div style={{ fontSize: ".68rem", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em" }}>{s.label}</div>
+                    <div style={{ fontWeight: 800, fontSize: ".95rem", color: s.color, marginTop: 2 }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="db-card-hd" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: ".75rem" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#0f172a" }}>Lịch sử thanh toán</div>
+                  <div style={{ fontSize: ".7rem", color: "#94a3b8", marginTop: "2px" }}>
+                    {payments.length} giao dịch tổng cộng
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
+                  <button
+                    className="db-btn-ghost"
+                    style={{ height: 36, padding: "0 .85rem", fontSize: ".8rem", display: "flex", alignItems: "center", gap: ".4rem" }}
+                    onClick={() => void loadPayments(paymentFilterHotelId ? Number(paymentFilterHotelId) : undefined)}
+                    disabled={paymentsLoading}
+                    title="Tải lại"
+                  >
+                    <ArrowUpRight size={14} style={{ transform: paymentsLoading ? "rotate(360deg)" : "none", transition: "transform .5s" }} />
+                    Tải lại
+                  </button>
+                  <select
+                    className="db-inp db-inp select"
+                    style={{ height: 36, width: 200, fontSize: ".82rem", padding: "0 2rem 0 .75rem" }}
+                    value={paymentFilterHotelId}
+                    onChange={(e) => {
+                      setPaymentFilterHotelId(e.target.value);
+                      setPage(1);
+                      void loadPayments(e.target.value ? Number(e.target.value) : undefined);
+                    }}
+                  >
+                    <option value="">Tất cả khách sạn</option>
+                    {hotels.map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                  <div className="db-search">
+                    <Search className="db-search-ic" size={14} />
+                    <input
+                      placeholder="Tên khách, mã booking, giao dịch..."
+                      value={search}
+                      onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {paymentsError && <div className="db-err" style={{ margin: "1rem 1.4rem 0" }}>{paymentsError}</div>}
+
+              <div className="table-responsive">
+                <table className="table db-tbl mb-0">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Khách</th>
+                      <th>Mã booking</th>
+                      <th>Khách sạn</th>
+                      <th>Phòng</th>
+                      <th>Số tiền</th>
+                      <th>Ngày thanh toán</th>
+                      <th>Trạng thái</th>
+                      <th style={{ width: 50 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentsLoading ? (
+                      <tr><td colSpan={9} className="db-empty">Đang tải dữ liệu...</td></tr>
+                    ) : filteredPayments.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="db-empty">
+                          <CreditCard size={30} style={{ opacity: 0.25, display: "block", margin: "0 auto .5rem" }} />
+                          <div style={{ fontWeight: 600, fontSize: ".88rem", marginBottom: 4 }}>
+                            {search ? "Không tìm thấy kết quả" : "Chưa có giao dịch nào"}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginate(filteredPayments).map((p, idx) => {
+                        const status = getPaymentStatusLabel(p.status);
+                        return (
+                          <tr key={p.id}>
+                            <td style={{ color: "#94a3b8", fontSize: ".78rem", width: 40 }}>
+                              {(page - 1) * PAGE_SIZE + idx + 1}
+                            </td>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
+                                <div className="db-av" style={{ background: "#f0fdf4", color: "#16a34a", fontSize: ".8rem" }}>
+                                  {(p.guestName ?? "?").charAt(0).toUpperCase()}
+                                </div>
+                                <span style={{ fontWeight: 700, color: "#0f172a", fontSize: ".84rem" }}>{p.guestName ?? "—"}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: "#64748b", fontSize: ".81rem", fontFamily: "monospace" }}>{p.bookingCode}</td>
+                            <td style={{ color: "#64748b", fontSize: ".81rem" }}>{p.hotelName ?? getHotelNameById(p.hotelId)}</td>
+                            <td style={{ fontWeight: 600, color: "#1686cb", fontSize: ".82rem" }}>
+                              {p.roomNumber ? `Phòng ${p.roomNumber}` : `#${p.roomId}`}
+                            </td>
+                            <td style={{ fontWeight: 700, color: "#0f172a", fontSize: ".83rem" }}>
+                              {p.amount.toLocaleString("vi-VN")} ₫
+                            </td>
+                            <td style={{ color: "#64748b", fontSize: ".81rem" }}>
+                              {new Date(p.paymentDate).toLocaleDateString("vi-VN")}
+                            </td>
+                            <td>
+                              <span className={`db-badge ${status.cls}`}>
+                                {p.status === "Success"
+                                  ? <BadgeCheck size={11} style={{ marginRight: 3 }} />
+                                  : p.status === "Failed"
+                                  ? <BadgeX size={11} style={{ marginRight: 3 }} />
+                                  : null}
+                                {status.label}
+                              </span>
+                            </td>
+                            <td>
+                              <button className="db-ibtn db-ibtn-view" type="button" onClick={() => setViewPayment(p)} title="Xem chi tiết">
+                                <Eye size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {totalPages(filteredPayments) > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: "1rem" }}>
+                  <button className="db-btn-ghost" style={{ height: 32, padding: "0 .6rem" }} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                    <ChevronLeft size={14} />
+                  </button>
+                  {Array.from({ length: totalPages(filteredPayments) }, (_, i) => i + 1).map((p) => (
+                    <button key={p} onClick={() => setPage(p)} style={{ height: 32, minWidth: 32, borderRadius: 8, border: "1px solid", borderColor: p === page ? "var(--brand)" : "#e2e8f0", background: p === page ? "var(--brand)" : "#f8fafc", color: p === page ? "#fff" : "#64748b", fontWeight: 600, fontSize: ".8rem", cursor: "pointer" }}>
+                      {p}
+                    </button>
+                  ))}
+                  <button className="db-btn-ghost" style={{ height: 32, padding: "0 .6rem" }} disabled={page === totalPages(filteredPayments)} onClick={() => setPage((p) => p + 1)}>
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Payment detail modal */}
+              {viewPayment && (
+                <div className="db-modal-backdrop" onClick={() => setViewPayment(null)}>
+                  <div className="db-modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+                    <div className="db-modal-hd" style={{ background: "linear-gradient(140deg,#0f2a5e 0%,#1a3d7c 100%)" }}>
+                      <div>
+                        <div style={{ color: "#fff", fontWeight: 700, fontSize: "1rem" }}>Chi tiết thanh toán</div>
+                        <div style={{ color: "rgba(255,255,255,.45)", fontSize: ".72rem", marginTop: 2 }}>
+                          Giao dịch #{viewPayment.id} · {viewPayment.paymentMethod}
+                        </div>
+                      </div>
+                      <button onClick={() => setViewPayment(null)} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 4 }}>
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <div className="db-modal-body">
+                      {/* Status banner */}
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: ".65rem",
+                        padding: ".75rem 1rem", borderRadius: 10, marginBottom: "1rem",
+                        background: viewPayment.status === "Success" ? "#f0fdf4" : viewPayment.status === "Failed" ? "#fff1f2" : "#fffbeb",
+                        border: `1px solid ${viewPayment.status === "Success" ? "#bbf7d0" : viewPayment.status === "Failed" ? "#fecdd3" : "#fde68a"}`,
+                      }}>
+                        {viewPayment.status === "Success"
+                          ? <BadgeCheck size={20} color="#16a34a" />
+                          : viewPayment.status === "Failed"
+                          ? <BadgeX size={20} color="#dc2626" />
+                          : <CreditCard size={20} color="#d97706" />}
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: ".85rem", color: viewPayment.status === "Success" ? "#15803d" : viewPayment.status === "Failed" ? "#b91c1c" : "#92400e" }}>
+                            {getPaymentStatusLabel(viewPayment.status).label}
+                          </div>
+                          <div style={{ fontSize: ".72rem", color: "#64748b" }}>
+                            {new Date(viewPayment.paymentDate).toLocaleString("vi-VN")}
+                          </div>
+                        </div>
+                        <div style={{ marginLeft: "auto", fontWeight: 800, fontSize: "1.05rem", color: "#0f172a" }}>
+                          {viewPayment.amount.toLocaleString("vi-VN")} ₫
+                        </div>
+                      </div>
+
+                      {([
+                        ["Mã booking",    viewPayment.bookingCode],
+                        ["Tên khách",     viewPayment.guestName ?? "—"],
+                        ["Khách sạn",     viewPayment.hotelName ?? getHotelNameById(viewPayment.hotelId)],
+                        ["Phòng",         viewPayment.roomNumber ? `Phòng ${viewPayment.roomNumber}` : `#${viewPayment.roomId}`],
+                        ["Mã giao dịch",  viewPayment.transactionId || "—"],
+                        ["Phương thức",   viewPayment.paymentMethod],
+                        ["Ngày TT",       new Date(viewPayment.paymentDate).toLocaleString("vi-VN")],
+                      ] as [string, string][]).map(([label, val]) => (
+                        <div key={label} className="db-info-row">
+                          <span style={{ fontSize: ".67rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", color: "#94a3b8" }}>{label}</span>
+                          <span className="db-info-val">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="db-modal-foot">
+                      <button className="db-btn-ghost" onClick={() => setViewPayment(null)}>Đóng</button>
                     </div>
                   </div>
                 </div>

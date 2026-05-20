@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogIn, LogOut, Menu, User, X } from "lucide-react";
+import { History, LayoutDashboard, LogIn, LogOut, Menu, User, X } from "lucide-react";
 import {
   clearAuthToken,
   getAuthRole,
@@ -118,6 +118,26 @@ const Header: React.FC = () => {
                         <div className="user-dropdown-role">{role}</div>
                       </div>
                       <div className="user-dropdown-divider" />
+                      {role === "Guest" && (
+                        <Link
+                          to="/my-history"
+                          onClick={() => setDropdownOpen(false)}
+                          className="user-dropdown-nav-link"
+                        >
+                          <History size={14} />
+                          Lịch sử của tôi
+                        </Link>
+                      )}
+                      {(role === "Admin" || role === "Host") && (
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="user-dropdown-nav-link"
+                        >
+                          <LayoutDashboard size={14} />
+                          Quản trị
+                        </Link>
+                      )}
                       <button onClick={handleLogout} className="user-dropdown-logout">
                         <LogOut size={14} />
                         Đăng xuất
@@ -197,6 +217,26 @@ const Header: React.FC = () => {
                   <div className="text-muted" style={{ fontSize: '11px' }}>{role}</div>
                 </div>
               </div>
+              {role === "Guest" && (
+                <Link
+                  to="/my-history"
+                  onClick={toggleMobileMenu}
+                  className="w-100 d-flex align-items-center justify-content-center gap-2 text-decoration-none fw-bold mb-3"
+                  style={{ padding: '12px', borderRadius: '50px', border: '2px solid #1686cb', color: '#1686cb', background: 'transparent', fontSize: '14px' }}
+                >
+                  <History size={18} /> Lịch sử của tôi
+                </Link>
+              )}
+              {(role === "Admin" || role === "Host") && (
+                <Link
+                  to="/dashboard"
+                  onClick={toggleMobileMenu}
+                  className="w-100 d-flex align-items-center justify-content-center gap-2 text-decoration-none fw-bold mb-3"
+                  style={{ padding: '12px', borderRadius: '50px', border: '2px solid #1686cb', color: '#1686cb', background: 'transparent', fontSize: '14px' }}
+                >
+                  <LayoutDashboard size={18} /> Quản trị
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="w-100 d-flex align-items-center justify-content-center gap-2 fw-bold mb-3 btn"
@@ -296,6 +336,13 @@ const Header: React.FC = () => {
           cursor: pointer; transition: background 0.2s;
         }
         .user-dropdown-logout:hover { background: #fff5f5; }
+        .user-dropdown-nav-link {
+          width: 100%; padding: 10px 16px; border: none; background: transparent;
+          display: flex; align-items: center; gap: 8px;
+          font-size: 13px; font-weight: 600; color: #1686cb;
+          text-decoration: none !important; transition: background 0.2s;
+        }
+        .user-dropdown-nav-link:hover { background: #eef6fd; }
 
         /* Social Icons */
         .social-link-item {

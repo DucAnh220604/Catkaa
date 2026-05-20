@@ -117,16 +117,14 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             });
         }
 
-        public async Task<ServiceResult<object>> ProcessOcrCheckInAsync(int hotelId, OcrCheckInDto request, int currentUserId)
+        public async Task<ServiceResult<OcrCheckInResponseDto>> ProcessOcrCheckInAsync(int hotelId, OcrCheckInDto request, int currentUserId)
         {
-            // Bước 1: Smart Lookup - Tìm Booking bằng CCCD + HotelId + CheckInDate hôm nay
-            // KHÔNG CHECK IDOR (HostId) vì Kiosk IoT là người gọi API này (Guest hoặc máy unauthenticated)
-            // Bảo mật dựa vào việc CCCD vật lý trùng khớp với GuestCccd đã đặt từ trước.
+            // KHÔNG CHECK IDOR (HostId) vì Kiosk IoT là người gọi (Guest/unauthenticated)
+            // Bảo mật dựa vào CCCD vật lý trùng khớp với GuestCccd đã đặt từ trước.
             var hotel = await _context.Hotels.FindAsync(hotelId);
-            if (hotel == null) return ServiceResult<object>.Fail("Hotel not found.");
+            if (hotel == null) return ServiceResult<OcrCheckInResponseDto>.Fail("Hotel not found.");
 
-            // Bước 2: Smart Lookup - Tìm Booking bằng CCCD + HotelId + CheckInDate hôm nay
-            var today = DateTime.Now.Date; // Dùng local time để tránh lệch múi giờ UTC+7
+            var today = DateTime.Now.Date;
             var booking = await _context.Bookings.FirstOrDefaultAsync(b =>
                 b.HotelId == hotelId &&
                 b.GuestCccd == request.IdNumber &&
@@ -136,14 +134,12 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 b.Status != "CheckedIn");
 
             if (booking == null)
-                return ServiceResult<object>.Fail(
+                return ServiceResult<OcrCheckInResponseDto>.Fail(
                     $"Không tìm thấy Booking hợp lệ cho khách có CCCD [{request.IdNumber}] tại khách sạn này hôm nay. " +
                     $"Vui lòng kiểm tra lại ngày check-in hoặc trạng thái đặt phòng.");
 
-            // Bước 3: Trích xuất RoomId từ Booking - không cho client tự truyền
             var roomId = booking.RoomId;
 
-            // Bước 4: Tạo CheckInRecord với thông tin OCR
             var checkinRecord = new CheckInRecord
             {
                 FullName = booking.GuestName ?? request.FullName,
@@ -158,20 +154,20 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
 
             _context.CheckInRecords.Add(checkinRecord);
 
-            // Bước 5: Cập nhật trạng thái Booking
             booking.Status = "CheckedIn";
             _context.Bookings.Update(booking);
 
             await _context.SaveChangesAsync();
 
-            return ServiceResult<object>.Ok("Check-in thành công via OCR", new
+            return ServiceResult<OcrCheckInResponseDto>.Ok("Check-in thành công via OCR", new OcrCheckInResponseDto
             {
-                checkInRecordId = checkinRecord.Id,
-                bookingCode = booking.BookingCode,
-                guestName = checkinRecord.FullName,
-                hotelId = hotelId,
-                roomId = roomId,
-                checkInTime = checkinRecord.CheckInTime
+                CheckInRecordId = checkinRecord.Id,
+                BookingId = booking.Id,
+                BookingCode = booking.BookingCode,
+                GuestName = checkinRecord.FullName,
+                HotelId = hotelId,
+                RoomId = roomId,
+                CheckInTime = checkinRecord.CheckInTime
             });
         }
 

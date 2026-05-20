@@ -38,7 +38,14 @@ namespace Catkaa.MicroPms.Api.Helpers
 
         public string CreateRequestUrl(string baseUrl, string vnp_HashSecret)
         {
+            var (url, _) = CreateRequestUrlWithDebug(baseUrl, vnp_HashSecret);
+            return url;
+        }
+
+        public (string url, string rawSignData) CreateRequestUrlWithDebug(string baseUrl, string vnp_HashSecret)
+        {
             var data = new StringBuilder();
+
             foreach (var kv in _requestData)
             {
                 if (!string.IsNullOrEmpty(kv.Value))
@@ -47,17 +54,12 @@ namespace Catkaa.MicroPms.Api.Helpers
                 }
             }
 
-            var querystring = data.ToString();
-            baseUrl += "?" + querystring;
-            var signData = querystring;
-            if (signData.Length > 0)
-            {
-                signData = signData.Remove(data.Length - 1, 1);
-            }
-            var vnp_SecureHash = HmacSHA512(vnp_HashSecret, signData);
-            baseUrl += "vnp_SecureHash=" + vnp_SecureHash;
+            // VNPay computes hash from URL-encoded key=value pairs (same string used in query)
+            var hashData = data.Length > 0 ? data.ToString().TrimEnd('&') : string.Empty;
+            var vnp_SecureHash = HmacSHA512(vnp_HashSecret.Trim(), hashData);
+            var url = baseUrl + "?" + hashData + "&vnp_SecureHash=" + vnp_SecureHash;
 
-            return baseUrl;
+            return (url, hashData);
         }
 
         public bool ValidateSignature(string inputHash, string secretKey)
@@ -69,15 +71,10 @@ namespace Catkaa.MicroPms.Api.Helpers
 
         private string GetResponseData()
         {
+            _responseData.Remove("vnp_SecureHashType");
+            _responseData.Remove("vnp_SecureHash");
+
             var data = new StringBuilder();
-            if (_responseData.ContainsKey("vnp_SecureHashType"))
-            {
-                _responseData.Remove("vnp_SecureHashType");
-            }
-            if (_responseData.ContainsKey("vnp_SecureHash"))
-            {
-                _responseData.Remove("vnp_SecureHash");
-            }
             foreach (var kv in _responseData)
             {
                 if (!string.IsNullOrEmpty(kv.Value))
@@ -85,10 +82,10 @@ namespace Catkaa.MicroPms.Api.Helpers
                     data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
                 }
             }
+
             if (data.Length > 0)
-            {
                 data.Remove(data.Length - 1, 1);
-            }
+
             return data.ToString();
         }
 

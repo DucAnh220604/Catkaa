@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, ScanLine, KeyRound,
   MessageSquare, Building2, Check, ShieldCheck,
-  CreditCard, Loader2, Phone,
+  CreditCard, Loader2, Phone, ExternalLink, Ban,
 } from "lucide-react";
 import CheckInService, { OcrCheckInResult, OcrCheckInResponse } from "../services/checkInService";
 import { getHotels, Hotel } from "../services/hotelService";
@@ -27,18 +27,14 @@ const StepWelcome = ({
   onNext: () => void;
 }) => (
   <div className="phone-screen-content d-flex flex-column h-100">
-    {/* Status bar */}
     <div className="px-3 py-2 text-white d-flex align-items-center gap-2" style={{ background: "#1686cb" }}>
       <Building2 size={14} />
       <span className="fw-bold text-truncate" style={{ fontSize: "11px", maxWidth: 140 }}>
         {selectedHotel?.name ?? "CATKAA Check-in"}
       </span>
-      <div className="ms-auto opacity-50">
-        <Phone size={12} />
-      </div>
+      <div className="ms-auto opacity-50"><Phone size={12} /></div>
     </div>
 
-    {/* Body */}
     <div className="flex-grow-1 p-3 overflow-auto" style={{ background: "#F0F4F8" }}>
       <div className="bg-white p-3 rounded-4 shadow-sm mb-3" style={{ fontSize: "12px", borderLeft: "3px solid #16309F" }}>
         Xin chào! 👋<br />
@@ -65,9 +61,7 @@ const StepWelcome = ({
           >
             <option value="">-- Chọn khách sạn --</option>
             {hotels.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name}
-              </option>
+              <option key={h.id} value={h.id}>{h.name}</option>
             ))}
           </select>
         )}
@@ -81,17 +75,17 @@ const StepWelcome = ({
       <div className="rounded-4 overflow-hidden shadow-sm mt-3">
         <div className="p-3 text-white" style={{ background: "linear-gradient(135deg, #16309F, #38BDF8)" }}>
           <div className="fw-bold" style={{ fontSize: "11px" }}>LÀM THỦ TỤC ONLINE</div>
-          <div className="opacity-75" style={{ fontSize: "9px" }}>Quét CCCD — xác thực tự động</div>
+          <div className="opacity-75" style={{ fontSize: "9px" }}>Quét CCCD — Xác thực — Thanh toán</div>
         </div>
         <div className="bg-white p-2 d-flex justify-content-around border-top" style={{ fontSize: "9px", fontWeight: "bold" }}>
           <span>✓ CCCD</span>
           <span>✓ Booking</span>
           <span>✓ Check-in</span>
+          <span>✓ VNPay</span>
         </div>
       </div>
     </div>
 
-    {/* Footer */}
     <div className="p-3 bg-white border-top">
       <button
         onClick={onNext}
@@ -148,7 +142,6 @@ const StepScan = ({
       </div>
 
       <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center p-4 gap-4">
-        {/* Scan area */}
         <div
           className="w-100 position-relative rounded-4 overflow-hidden d-flex align-items-center justify-content-center"
           style={{
@@ -163,7 +156,6 @@ const StepScan = ({
           }}
           onClick={() => (phase === "idle" || phase === "error") && fileInputRef.current?.click()}
         >
-          {/* Scan line animation */}
           {phase === "loading" && (
             <motion.div
               animate={{ top: ["0%", "100%", "0%"] }}
@@ -183,16 +175,9 @@ const StepScan = ({
             <CreditCard size={40} className={phase === "error" ? "text-danger opacity-50" : "text-primary opacity-25"} />
           )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            style={{ display: "none" }}
-          />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: "none" }} />
         </div>
 
-        {/* Status text */}
         <p className="text-white text-center small fw-bold mb-0">
           {phase === "loading"
             ? "Đang nhận diện & xác thực booking..."
@@ -201,7 +186,6 @@ const StepScan = ({
             : "Nhấn vào khung để tải ảnh CCCD lên"}
         </p>
 
-        {/* Error */}
         {phase === "error" && (
           <div className="w-100">
             <div className="rounded-3 p-3 text-center mb-2" style={{ background: "rgba(239,68,68,0.15)", color: "#ff8080", fontSize: "12px" }}>
@@ -220,38 +204,35 @@ const StepScan = ({
 /* ─────────────────────────────────────────────────
    BƯỚC 2 — Check-in thành công
 ───────────────────────────────────────────────── */
-const StepSuccess = ({
+const StepCheckInDone = ({
   checkInResult,
   roomInfo,
   hotelName,
+  onGoToPayment,
 }: {
   checkInResult: OcrCheckInResponse | null;
   roomInfo: RoomRecord | null;
   hotelName: string;
+  onGoToPayment: () => void;
 }) => {
   const data = checkInResult?.data;
   const ocrRaw = checkInResult?.ocrRaw;
+  const hasPayment = !!data?.paymentUrl;
 
   const checkInTime = data?.checkInTime
     ? new Date(data.checkInTime).toLocaleString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric",
       })
     : "—";
 
   const roomLabel = roomInfo
     ? `Phòng ${roomInfo.roomNumber} · ${roomInfo.roomType}`
-    : data?.roomId
-    ? `Phòng #${data.roomId}`
-    : "—";
+    : data?.roomId ? `Phòng #${data.roomId}` : "—";
 
   return (
     <div className="phone-screen-content bg-white h-100 d-flex flex-column">
       <div className="flex-grow-1 p-3 d-flex flex-column justify-content-center overflow-auto">
-        {/* Icon */}
         <div className="text-center mb-3">
           <motion.div
             initial={{ scale: 0, rotate: -20 }}
@@ -265,31 +246,195 @@ const StepSuccess = ({
           <p className="text-muted small mb-0">{hotelName}</p>
         </div>
 
-        {/* Info card */}
         <div className="rounded-4 p-3 mt-3" style={{ background: "#f4f8ff", border: "1.5px solid #d0e0ff" }}>
           <Row label="Khách" value={data?.guestName ?? "—"} />
           <Row label="CCCD" value={ocrRaw?.idNumber ?? "—"} />
           <Row label="Phòng" value={roomLabel} />
           <Row label="Giờ check-in" value={checkInTime} />
-          {data?.bookingCode && (
-            <Row label="Mã booking" value={data.bookingCode} />
-          )}
+          {data?.bookingCode && <Row label="Mã booking" value={data.bookingCode} />}
           <div className="d-flex gap-2 align-items-center mt-3 pt-2 border-top">
             <ShieldCheck size={13} className="text-primary flex-shrink-0" />
-            <span style={{ fontSize: "10px", color: "#666" }}>
-              Đã xác thực & ghi nhận bởi CATKAA
-            </span>
+            <span style={{ fontSize: "10px", color: "#666" }}>Đã xác thực & ghi nhận bởi CATKAA</span>
           </div>
         </div>
       </div>
 
-      <div className="p-3 border-top">
+      <div className="p-3 border-top d-flex flex-column gap-2">
+        {hasPayment ? (
+          <button
+            onClick={onGoToPayment}
+            className="btn w-100 rounded-pill text-white fw-bold py-2 shadow-sm"
+            style={{ background: "linear-gradient(135deg,#16309F,#1686cb)", fontSize: "13px" }}
+          >
+            <CreditCard size={14} className="me-2" />
+            Tiếp tục thanh toán →
+          </button>
+        ) : (
+          <div className="rounded-3 p-2 text-center" style={{ background: "#f0fdf4", fontSize: "11px", color: "#16a34a", border: "1px solid #bbf7d0" }}>
+            ✓ Đã thanh toán trước — Không cần thao tác thêm
+          </div>
+        )}
         <Link
           to="/"
           className="btn btn-outline-secondary w-100 rounded-pill fw-bold small text-decoration-none"
+          style={{ fontSize: "12px" }}
         >
           Về trang chủ
         </Link>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────
+   BƯỚC 3 — Thanh toán VNPay
+───────────────────────────────────────────────── */
+const StepPayment = ({
+  checkInResult,
+  roomInfo,
+  hotelName,
+}: {
+  checkInResult: OcrCheckInResponse | null;
+  roomInfo: RoomRecord | null;
+  hotelName: string;
+}) => {
+  const data = checkInResult?.data;
+  const paymentUrl = data?.paymentUrl;
+  const [paid, setPaid] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "PAYMENT_RESULT") {
+        if (e.data.success) setPaymentConfirmed(true);
+        setPaid(true);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  const roomLabel = roomInfo
+    ? `Phòng ${roomInfo.roomNumber} · ${roomInfo.roomType}`
+    : data?.roomId ? `Phòng #${data.roomId}` : "—";
+
+  const handlePay = () => {
+    if (paymentUrl) {
+      window.open(paymentUrl, "_blank");
+      setPaid(true);
+    }
+  };
+
+  return (
+    <div className="phone-screen-content d-flex flex-column h-100">
+      {/* Header */}
+      <div className="px-3 py-2 text-white d-flex align-items-center gap-2" style={{ background: "linear-gradient(135deg,#16309F,#1686cb)" }}>
+        <CreditCard size={14} />
+        <span className="fw-bold" style={{ fontSize: "11px" }}>THANH TOÁN</span>
+        <div className="ms-auto">
+          <img src="/images/vnpay-logo.png" alt="VNPay" style={{ height: 16, opacity: 0.9 }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        </div>
+      </div>
+
+      <div className="flex-grow-1 p-3 overflow-auto" style={{ background: "#F0F4F8" }}>
+        {/* Booking summary */}
+        <div className="bg-white rounded-4 p-3 shadow-sm mb-3">
+          <p className="fw-bold text-muted mb-2" style={{ fontSize: "10px", letterSpacing: "0.5px" }}>THÔNG TIN ĐẶT PHÒNG</p>
+          <Row label="Khách" value={data?.guestName ?? "—"} />
+          <Row label="Phòng" value={roomLabel} />
+          <Row label="Khách sạn" value={hotelName} />
+          {data?.bookingCode && <Row label="Mã booking" value={data.bookingCode} />}
+        </div>
+
+        {/* Payment instruction */}
+        {paymentConfirmed ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-4 p-3 text-center"
+            style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0" }}
+          >
+            <div className="mb-2" style={{ fontSize: "32px" }}>🎉</div>
+            <p className="fw-bold mb-1" style={{ fontSize: "13px", color: "#16a34a" }}>
+              Thanh toán thành công!
+            </p>
+            <p className="text-muted mb-0" style={{ fontSize: "10px" }}>
+              Phòng của bạn đã được xác nhận. Chúc bạn có kỳ nghỉ tuyệt vời!
+            </p>
+          </motion.div>
+        ) : !paid ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-4 p-3 text-center"
+            style={{ background: "linear-gradient(135deg,#eff6ff,#dbeafe)", border: "1.5px solid #bfdbfe" }}
+          >
+            <div className="mb-2" style={{ fontSize: "28px" }}>💳</div>
+            <p className="fw-bold mb-1" style={{ fontSize: "12px", color: "#1e40af" }}>
+              Thanh toán qua VNPay
+            </p>
+            <p className="text-muted mb-0" style={{ fontSize: "10px" }}>
+              Nhấn nút bên dưới để chuyển sang trang thanh toán an toàn của VNPay.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-4 p-3 text-center"
+            style={{ background: "#fffbeb", border: "1.5px solid #fde68a" }}
+          >
+            <div className="mb-2" style={{ fontSize: "24px" }}>⏳</div>
+            <p className="fw-bold mb-1" style={{ fontSize: "12px", color: "#92400e" }}>
+              Đang chờ xác nhận...
+            </p>
+            <p className="text-muted mb-0" style={{ fontSize: "10px" }}>
+              Hoàn tất thanh toán trên tab VNPay. Trang này sẽ tự cập nhật.
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      <div className="p-3 bg-white border-top d-flex flex-column gap-2">
+        {paymentConfirmed ? (
+          <Link
+            to="/"
+            className="btn w-100 rounded-pill text-white fw-bold py-2 text-decoration-none"
+            style={{ background: "#16a34a", fontSize: "13px" }}
+          >
+            <Check size={14} className="me-2" />
+            Về trang chủ
+          </Link>
+        ) : !paid ? (
+          <button
+            onClick={handlePay}
+            className="btn w-100 rounded-pill text-white fw-bold py-2 shadow"
+            style={{ background: "linear-gradient(135deg,#16309F,#1686cb)", fontSize: "13px" }}
+          >
+            <ExternalLink size={14} className="me-2" />
+            Thanh toán qua VNPay
+          </button>
+        ) : (
+          <button
+            onClick={handlePay}
+            className="btn btn-outline-primary w-100 rounded-pill fw-bold py-2"
+            style={{ fontSize: "12px" }}
+          >
+            <ExternalLink size={13} className="me-1" />
+            Mở lại trang VNPay
+          </button>
+        )}
+        {!paymentConfirmed && (
+          <Link
+            to="/"
+            className="btn w-100 rounded-pill fw-bold py-2 text-decoration-none"
+            style={{ background: "#f1f5f9", color: "#64748b", fontSize: "12px" }}
+          >
+            <Ban size={13} className="me-1" />
+            Bỏ qua — Thanh toán tại quầy
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -310,6 +455,7 @@ const STEPS_DATA = [
   { label: "Chào mừng", icon: MessageSquare },
   { label: "Quét CCCD", icon: ScanLine },
   { label: "Nhận phòng", icon: KeyRound },
+  { label: "Thanh toán", icon: CreditCard },
 ];
 
 export default function GuestFlow() {
@@ -444,7 +590,15 @@ export default function GuestFlow() {
                       />
                     )}
                     {step === 2 && (
-                      <StepSuccess
+                      <StepCheckInDone
+                        checkInResult={checkInResult}
+                        roomInfo={roomInfo}
+                        hotelName={selectedHotel?.name ?? ""}
+                        onGoToPayment={() => setStep(3)}
+                      />
+                    )}
+                    {step === 3 && (
+                      <StepPayment
                         checkInResult={checkInResult}
                         roomInfo={roomInfo}
                         hotelName={selectedHotel?.name ?? ""}

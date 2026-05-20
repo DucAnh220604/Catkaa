@@ -14,11 +14,13 @@ namespace Catkaa.MicroPms.Api.Controllers
     {
         private readonly ICheckInRecordService _checkInService;
         private readonly IFptOcrService _fptOcrService;
+        private readonly IPaymentService _paymentService;
 
-        public CheckInRecordsController(ICheckInRecordService service, IFptOcrService fptOcrService)
+        public CheckInRecordsController(ICheckInRecordService service, IFptOcrService fptOcrService, IPaymentService paymentService)
         {
             _checkInService = service;
             _fptOcrService = fptOcrService;
+            _paymentService = paymentService;
         }
 
         [HttpGet]
@@ -51,26 +53,43 @@ namespace Catkaa.MicroPms.Api.Controllers
             }
         }
 
-        // ✅ OCR Check-in: Tự động dò Booking bằng CCCD + Hotel + Ngày hôm nay
+        /// <summary>
+        /// [Kiosk/Guest] OCR Check-in: Quét CCCD, tự động dò Booking theo CCCD + Hotel + Ngày hôm nay.
+        /// Trả về paymentUrl để khách thanh toán ngay tại kiosk (nếu booking chưa trả tiền).
+        /// </summary>
         [HttpPost("/api/hotels/{hotelId}/checkin-ocr")]
         [Consumes("multipart/form-data")]
-        [AllowAnonymous] // Kiosk IoT (Guest) có thể tự gửi ảnh
+        [AllowAnonymous]
         public async Task<IActionResult> OcrCheckIn([FromRoute] int hotelId, IFormFile image)
         {
-            if (image == null || image.Length == 0) return BadRequest(new { message = "Vui lòng tải lên ảnh CCCD hợp lệ." });
-
+            if (image == null || image.Length == 0)
+                return BadRequest(new { message = "Vui lòng tải lên ảnh CCCD hợp lệ." });
 
             try
             {
-                // Bước 1: Gọi FPT.AI để bóc tách dữ liệu CCCD
+                // Bước 1: FPT.AI OCR bóc tách dữ liệu CCCD
                 var ocrData = await _fptOcrService.ExtractIdInfoAsync(image);
-                if (ocrData == null) return BadRequest(new { message = "Không thể nhận diện CCCD từ ảnh này. Vui lòng thử lại." });
+                if (ocrData == null)
+                    return BadRequest(new { message = "Không thể nhận diện CCCD từ ảnh này. Vui lòng thử lại." });
 
-                // Bước 2: Truyền dữ liệu sang Service để dò tìm Booking & tạo CheckInRecord
-                var result = await _checkInService.ProcessOcrCheckInAsync(hotelId, ocrData, CurrentUserId ?? 0);
-                if (!result.Success) return BadRequest(new { message = result.Message });
-                
-                return Ok(new { message = result.Message, data = result.Data, ocrRaw = ocrData });
+                // Bước 2: Tìm Booking & tạo CheckInRecord
+                var checkInResult = await _checkInService.ProcessOcrCheckInAsync(hotelId, ocrData, CurrentUserId ?? 0);
+                if (!checkInResult.Success)
+                    return BadRequest(new { message = checkInResult.Message });
+
+                var checkInData = checkInResult.Data!;
+
+                // Bước 3: Tạo link thanh toán VNPay (null = kiosk/anonymous, bỏ qua IDOR check)
+                var paymentResult = await _paymentService.CreatePaymentUrlAsync(checkInData.BookingId, null, HttpContext);
+                if (paymentResult.Success)
+                    checkInData.PaymentUrl = paymentResult.Data;
+
+                return Ok(new
+                {
+                    message = checkInResult.Message,
+                    data = checkInData,
+                    ocrRaw = ocrData
+                });
             }
             catch (System.Exception ex)
             {
@@ -78,7 +97,9 @@ namespace Catkaa.MicroPms.Api.Controllers
             }
         }
 
-        // Walk-in manual check-in record
+        /// <summary>
+        /// [Host] Walk-in manual check-in (không qua OCR).
+        /// </summary>
         [HttpPost("/api/hotels/{hotelId}/checkinrecords")]
         public async Task<IActionResult> Create(int hotelId, [FromBody] CheckInRecordCreateDto request)
         {
@@ -89,7 +110,6 @@ namespace Catkaa.MicroPms.Api.Controllers
             {
                 var result = await _checkInService.CreateAsync(hotelId, request, CurrentUserId.Value);
                 if (!result.Success) return Unauthorized(new { message = result.Message });
-
                 return Ok(new { message = result.Message, data = result.Data });
             }
             catch (System.Exception ex)
@@ -107,7 +127,6 @@ namespace Catkaa.MicroPms.Api.Controllers
             {
                 var result = await _checkInService.UpdateAsync(id, request, CurrentUserRole, CurrentUserId);
                 if (!result.Success) return Unauthorized(new { message = result.Message });
-
                 return Ok(new { message = result.Message });
             }
             catch (System.Exception ex)
@@ -123,7 +142,6 @@ namespace Catkaa.MicroPms.Api.Controllers
             {
                 var result = await _checkInService.DeleteAsync(id, CurrentUserRole, CurrentUserId);
                 if (!result.Success) return Unauthorized(new { message = result.Message });
-
                 return Ok(new { message = result.Message });
             }
             catch (System.Exception ex)

@@ -98,14 +98,20 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
         public async Task<ServiceResult<List<BookingResponseDto>>> GetBookingHistoryAsync(int userId)
         {
             var bookings = await _context.Bookings
+                .Include(b => b.Hotel)
+                .Include(b => b.Room)
                 .Where(b => b.UserId == userId)
+                .OrderByDescending(b => b.CheckInDate)
                 .Select(b => new BookingResponseDto
                 {
                     Id = b.Id,
                     BookingCode = b.BookingCode,
                     GuestName = b.GuestName ?? string.Empty,
                     HotelId = b.HotelId,
+                    HotelName = b.Hotel != null ? b.Hotel.Name : null,
                     RoomId = b.RoomId,
+                    RoomNumber = b.Room != null ? b.Room.RoomNumber : null,
+                    RoomType = b.Room != null ? b.Room.RoomType : null,
                     CheckInDate = b.CheckInDate,
                     CheckOutDate = b.CheckOutDate,
                     Status = b.Status
