@@ -15,5 +15,6 @@ namespace Catkaa.MicroPms.Api.Services.Interfaces
         Task<ServiceResult<List<BookingResponseDto>>> GetBookingHistoryAsync(int userId);
         Task<ServiceResult<object>> UpdateBookingAsync(int id, BookingUpdateDto request, string role, int? currentUserId);
         Task<ServiceResult<object>> DeleteBookingAsync(int id, string role, int? currentUserId);
+        Task<ServiceResult<object>> CheckoutAsync(int id, string role, int? currentUserId);
     }
 }

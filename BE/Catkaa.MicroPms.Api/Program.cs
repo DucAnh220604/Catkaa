@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IEmailService, MockEmailService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 // Configure FPT.AI HttpClient
 var fptAiConfig = builder.Configuration.GetSection("FptAi");

@@ -131,7 +131,8 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 b.CheckInDate.Date <= today &&
                 b.CheckOutDate.Date >= today &&
                 b.Status != "Cancelled" &&
-                b.Status != "CheckedIn");
+                b.Status != "CheckIn" && 
+                b.Status != "CheckOut");
 
             if (booking == null)
                 return ServiceResult<OcrCheckInResponseDto>.Fail(
@@ -154,7 +155,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
 
             _context.CheckInRecords.Add(checkinRecord);
 
-            booking.Status = "CheckedIn";
+            booking.Status = "AwaitingPayment";
             _context.Bookings.Update(booking);
 
             await _context.SaveChangesAsync();

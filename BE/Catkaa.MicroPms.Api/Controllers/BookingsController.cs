@@ -111,5 +111,22 @@ namespace Catkaa.MicroPms.Api.Controllers
                 return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
+
+        [HttpPut("{id}/checkout")]
+        [Authorize]
+        public async Task<IActionResult> Checkout(int id)
+        {
+            try
+            {
+                var result = await _bookingService.CheckoutAsync(id, CurrentUserRole, CurrentUserId);
+                if (!result.Success) return BadRequest(new { message = result.Message });
+
+                return Ok(new { message = result.Message });
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            }
+        }
     }
 }

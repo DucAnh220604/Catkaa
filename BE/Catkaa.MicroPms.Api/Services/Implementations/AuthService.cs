@@ -71,14 +71,6 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                     return ServiceResult<object?>.Fail("Username already exists");
                 }
 
-                if (request.Role == "Host")
-                {
-                    if (string.IsNullOrWhiteSpace(request.HotelName) || string.IsNullOrWhiteSpace(request.HotelAddress))
-                    {
-                        return ServiceResult<object?>.Fail("HotelName and HotelAddress are required for Host registration.");
-                    }
-                }
-
                 var user = new User
                 {
                     Username = request.Username,
@@ -89,19 +81,6 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-
-                if (user.Role == "Host")
-                {
-                    var hotel = new Hotel
-                    {
-                        Name = request.HotelName!,
-                        Address = request.HotelAddress!,
-                        HostId = user.Id
-                    };
-
-                    _context.Hotels.Add(hotel);
-                    await _context.SaveChangesAsync();
-                }
 
                 await transaction.CommitAsync();
 

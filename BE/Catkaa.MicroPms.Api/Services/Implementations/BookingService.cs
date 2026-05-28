@@ -78,7 +78,15 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             await _context.SaveChangesAsync();
             
             if (!string.IsNullOrEmpty(request.GuestEmail))
-                await _emailService.SendBookingInfoAsync(request.GuestEmail, bookingCode);
+            {
+                string emailBody = $"Mã Booking: {bookingCode}\n" +
+                                   $"Khách sạn: {room.Hotel?.Name}\n" +
+                                   $"Phòng: {room.RoomNumber ?? roomId.ToString()}\n" +
+                                   $"Check-in: {request.CheckInDate:dd/MM/yyyy HH:mm}\n" +
+                                   $"Check-out: {request.CheckOutDate:dd/MM/yyyy HH:mm}";
+
+                await _emailService.SendEmailAsync(request.GuestEmail, "Xác nhận đặt phòng thành công - CATKAA", emailBody);
+            }
 
             var responseDto = new BookingResponseDto
             {
@@ -217,6 +225,23 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             await _context.SaveChangesAsync();
 
             return ServiceResult<object>.Ok("Deleted successfully");
+        }
+
+        public async Task<ServiceResult<object>> CheckoutAsync(int id, string role, int? currentUserId)
+        {
+            var booking = await _context.Bookings.Include(b => b.Hotel).FirstOrDefaultAsync(b => b.Id == id);
+            if (booking == null) return ServiceResult<object>.Fail("Booking not found");
+
+            if (role != "Admin" && currentUserId != booking.Hotel?.HostId && currentUserId != booking.UserId)
+            {
+                return ServiceResult<object>.Fail("Unauthorized Access");
+            }
+
+            booking.Status = "CheckOut";
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<object>.Ok("Checkout successful");
         }
     }
 }

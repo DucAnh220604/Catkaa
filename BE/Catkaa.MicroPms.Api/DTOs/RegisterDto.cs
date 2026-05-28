@@ -18,11 +18,5 @@ namespace Catkaa.MicroPms.Api.DTOs
 
         [MaxLength(20)]
         public string Role { get; set; } = "Guest";
-
-        [MaxLength(100)]
-        public string? HotelName { get; set; }
-
-        [MaxLength(255)]
-        public string? HotelAddress { get; set; }
     }
 }
