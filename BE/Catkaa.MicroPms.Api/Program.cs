@@ -12,18 +12,8 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var useSqliteForDev = builder.Environment.IsDevelopment();
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    if (useSqliteForDev)
-    {
-        options.UseSqlite("Data Source=catkaa-dev.db");
-        return;
-    }
-
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IEmailService, MockEmailService>();
 
@@ -135,20 +125,7 @@ app.MapControllers();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await db.Database.EnsureCreatedAsync();
-
-    if (!await db.Users.AnyAsync(u => u.Role == "Admin"))
-    {
-        db.Users.Add(new User
-        {
-            Username = "admin",
-            PasswordHash = "123456",
-            Email = "admin@catkaa.com",
-            Role = "Admin"
-        });
-
-        await db.SaveChangesAsync();
-    }
+    await db.Database.MigrateAsync();
 }
 
 app.Run();

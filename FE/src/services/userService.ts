@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config/apiConfig';
 import { getAuthToken } from "./authService";
 
 export type HotelDto = {
@@ -21,8 +22,7 @@ export type UserPayload = {
   role?: string;
 };
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5096";
+
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAuthToken();

@@ -1,4 +1,5 @@
-import { getAuthToken } from "./authService";
+import { API_BASE_URL } from '../config/apiConfig';
+import { getAuthToken, clearAuthToken } from "./authService";
 
 export type HotelRoom = {
   id: number;
@@ -24,8 +25,7 @@ export type HotelPayload = {
   imageGallery: string[];
 };
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5096";
+
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAuthToken();
@@ -51,6 +51,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      clearAuthToken();
+      window.location.href = "/login";
+    }
     throw new Error(data?.message ?? "Không thể thao tác khách sạn");
   }
 

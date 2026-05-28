@@ -1,4 +1,5 @@
-import { API_BASE_URL, getAuthToken } from './authService';
+import { API_BASE_URL } from '../config/apiConfig';
+import { getAuthToken } from './authService';
 
 export interface BookingCreateDto {
   guestName: string;

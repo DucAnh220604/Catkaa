@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config/apiConfig';
+
 export type LoginRequest = {
   username: string;
   password: string;
@@ -15,8 +17,7 @@ type JwtPayload = {
   [key: string]: unknown;
 };
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5096";
+
 const TOKEN_KEY = "catkaa_auth_token";
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
