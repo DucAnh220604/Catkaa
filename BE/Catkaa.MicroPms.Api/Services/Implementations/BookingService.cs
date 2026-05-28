@@ -79,11 +79,25 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             
             if (!string.IsNullOrEmpty(request.GuestEmail))
             {
-                string emailBody = $"Mã Booking: {bookingCode}\n" +
-                                   $"Khách sạn: {room.Hotel?.Name}\n" +
-                                   $"Phòng: {room.RoomNumber ?? roomId.ToString()}\n" +
-                                   $"Check-in: {request.CheckInDate:dd/MM/yyyy HH:mm}\n" +
-                                   $"Check-out: {request.CheckOutDate:dd/MM/yyyy HH:mm}";
+                int totalNights = (request.CheckOutDate.Date - request.CheckInDate.Date).Days;
+                if (totalNights <= 0) totalNights = 1;
+                decimal totalPrice = totalNights * room.Price;
+
+                var templatePath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "EmailTemplates", "BookingReceipt.html");
+                var emailBody = await System.IO.File.ReadAllTextAsync(templatePath);
+
+                emailBody = emailBody.Replace("{{HotelName}}", room.Hotel?.Name ?? "")
+                                     .Replace("{{HotelAddress}}", room.Hotel?.Address ?? "")
+                                     .Replace("{{RoomNumber}}", room.RoomNumber ?? roomId.ToString())
+                                     .Replace("{{RoomType}}", room.RoomType ?? "")
+                                     .Replace("{{RoomPrice}}", room.Price.ToString("N0"))
+                                     .Replace("{{GuestName}}", request.GuestName ?? "")
+                                     .Replace("{{GuestCccd}}", request.GuestCccd ?? "")
+                                     .Replace("{{CheckInDate}}", request.CheckInDate.ToString("dd/MM/yyyy"))
+                                     .Replace("{{CheckOutDate}}", request.CheckOutDate.ToString("dd/MM/yyyy"))
+                                     .Replace("{{TotalNights}}", totalNights.ToString())
+                                     .Replace("{{TotalPrice}}", totalPrice.ToString("N0"))
+                                     .Replace("{{BookingCode}}", bookingCode);
 
                 await _emailService.SendEmailAsync(request.GuestEmail, "Xác nhận đặt phòng thành công - CATKAA", emailBody);
             }
