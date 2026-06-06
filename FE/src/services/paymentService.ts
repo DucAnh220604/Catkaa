@@ -47,7 +47,7 @@ class PaymentService {
     return await response.json();
   }
 
-  static async mockPayment(bookingId: number): Promise<void> {
+  static async mockPayment(bookingId: number): Promise<{ roomPassword?: string }> {
     const response = await fetch(`${API_BASE_URL}/api/payments/${bookingId}/mock-pay`, {
       method: 'POST',
       headers: {
@@ -59,6 +59,9 @@ class PaymentService {
       const error = await response.json();
       throw new Error(error.message || 'Thanh toán giả lập thất bại');
     }
+    
+    const result = await response.json();
+    return result.data || {};
   }
 }
 

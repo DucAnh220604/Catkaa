@@ -435,7 +435,10 @@ const StepPayment = ({
     if (!data?.bookingId) return;
     setLoadingMock(true);
     try {
-      await PaymentService.mockPayment(data.bookingId);
+      const result = await PaymentService.mockPayment(data.bookingId);
+      if (result.roomPassword && data) {
+        data.roomPassword = result.roomPassword;
+      }
       setPaymentConfirmed(true);
       setPaid(true);
     } catch (err) {
@@ -488,6 +491,14 @@ const StepPayment = ({
             <p className="text-muted mb-0" style={{ fontSize: "10px" }}>
               Phòng của bạn đã được xác nhận. Chúc bạn có kỳ nghỉ tuyệt vời!
             </p>
+            {data?.roomPassword && (
+              <div className="mt-3 p-2 rounded-3" style={{ background: "#dcfce7", border: "1px dashed #22c55e" }}>
+                <p className="mb-1 text-success fw-bold" style={{ fontSize: "11px" }}>Mật khẩu mở cửa phòng của bạn là:</p>
+                <div className="fw-bolder" style={{ fontSize: "20px", color: "#16a34a", letterSpacing: "2px" }}>
+                  {data.roomPassword}
+                </div>
+              </div>
+            )}
           </motion.div>
         ) : !paid ? (
           <motion.div

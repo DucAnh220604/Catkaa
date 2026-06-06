@@ -42,7 +42,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 RoomNumber = r.RoomNumber,
                 RoomType = r.RoomType,
                 Price = r.Price,
-                IsAvailable = r.IsAvailable,
+                Status = r.Status,
                 Description = r.Description,
                 MainImageUrl = r.MainImageUrl,
                 ImageGallery = r.ImageGallery != null ? JsonSerializer.Deserialize<List<string>>(r.ImageGallery) : new List<string>()
@@ -66,7 +66,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 RoomNumber = r.RoomNumber,
                 RoomType = r.RoomType,
                 Price = r.Price,
-                IsAvailable = r.IsAvailable,
+                Status = r.Status,
                 Description = r.Description,
                 MainImageUrl = r.MainImageUrl,
                 ImageGallery = r.ImageGallery != null ? JsonSerializer.Deserialize<List<string>>(r.ImageGallery) : new List<string>()
@@ -85,7 +85,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 RoomNumber = dto.RoomNumber,
                 RoomType = dto.RoomType,
                 Price = dto.Price,
-                IsAvailable = dto.IsAvailable,
+                Status = dto.Status,
                 Description = dto.Description,
                 MainImageUrl = dto.MainImageUrl,
                 ImageGallery = dto.ImageGallery != null ? JsonSerializer.Serialize(dto.ImageGallery) : null
@@ -100,7 +100,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 RoomNumber = room.RoomNumber,
                 RoomType = room.RoomType,
                 Price = room.Price,
-                IsAvailable = room.IsAvailable
+                Status = room.Status
             });
         }
 
@@ -115,7 +115,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             room.RoomNumber = dto.RoomNumber;
             room.RoomType = dto.RoomType;
             room.Price = dto.Price;
-            room.IsAvailable = dto.IsAvailable;
+            room.Status = dto.Status;
             room.Description = dto.Description;
             room.MainImageUrl = dto.MainImageUrl;
             room.ImageGallery = dto.ImageGallery != null ? JsonSerializer.Serialize(dto.ImageGallery) : null;

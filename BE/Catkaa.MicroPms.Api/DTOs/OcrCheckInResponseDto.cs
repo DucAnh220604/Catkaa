@@ -12,5 +12,6 @@ namespace Catkaa.MicroPms.Api.DTOs
         public int RoomId { get; set; }
         public DateTime CheckInTime { get; set; }
         public string? PaymentUrl { get; set; }
+        public string? RoomPassword { get; set; }
     }
 }

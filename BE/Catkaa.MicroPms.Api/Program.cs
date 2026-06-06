@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Catkaa.MicroPms.Api.Services;
 using Catkaa.MicroPms.Api.Services.Interfaces;
 using Catkaa.MicroPms.Api.Services.Implementations;
+using Catkaa.MicroPms.Api.Services.BackgroundWorkers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -36,6 +37,8 @@ builder.Services.AddScoped<IHotelService, HotelService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICheckInRecordService, CheckInRecordService>();
+
+builder.Services.AddHostedService<RoomCleaningWorker>();
 
 builder.Services.AddCors(options =>
 {

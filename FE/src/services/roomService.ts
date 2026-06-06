@@ -7,7 +7,7 @@ export type RoomRecord = {
   roomNumber: string;
   roomType: string;
   price: number;
-  isAvailable: boolean;
+  status: string;
   description?: string | null;
   mainImageUrl?: string | null;
   imageGallery?: string[] | null;
@@ -17,7 +17,7 @@ export type RoomPayload = {
   roomNumber: string;
   roomType: string;
   price: number;
-  isAvailable: boolean;
+  status: string;
   description?: string;
   mainImageUrl?: string;
   imageGallery: string[];

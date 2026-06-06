@@ -38,6 +38,7 @@ export interface OcrCheckInResult {
   roomId: number;
   checkInTime: string;
   paymentUrl?: string;
+  roomPassword?: string;
 }
 
 export interface OcrCheckInResponse {

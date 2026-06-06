@@ -134,6 +134,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                     RoomId = b.RoomId,
                     RoomNumber = b.Room != null ? b.Room.RoomNumber : null,
                     RoomType = b.Room != null ? b.Room.RoomType : null,
+                    RoomPassword = b.Room != null ? b.Room.RoomPassword : null,
                     CheckInDate = b.CheckInDate,
                     CheckOutDate = b.CheckOutDate,
                     Status = b.Status

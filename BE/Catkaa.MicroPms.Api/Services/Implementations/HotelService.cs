@@ -73,7 +73,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                     RoomNumber = r.RoomNumber,
                     RoomType = r.RoomType,
                     Price = r.Price,
-                    IsAvailable = r.IsAvailable,
+                    Status = r.Status,
                     Description = r.Description,
                     MainImageUrl = r.MainImageUrl,
                     ImageGallery = r.ImageGallery != null ? JsonSerializer.Deserialize<List<string>>(r.ImageGallery) : new List<string>()

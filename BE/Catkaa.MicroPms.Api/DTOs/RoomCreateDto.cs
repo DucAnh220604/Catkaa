@@ -15,7 +15,7 @@ namespace Catkaa.MicroPms.Api.DTOs
 
         public decimal Price { get; set; }
         
-        public bool IsAvailable { get; set; } = true;
+        public string Status { get; set; } = "Available";
 
         [MaxLength(2000)]
         public string? Description { get; set; }

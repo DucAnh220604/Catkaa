@@ -216,7 +216,7 @@ export default function TestBooking() {
                     {rooms.map((r) => (
                       <option key={r.id} value={r.id}>
                         Phòng {r.roomNumber} · {r.roomType} · {formatPrice(r.price)}/đêm
-                        {!r.isAvailable ? " (Không trống)" : ""}
+                        {r.status !== "Available" ? " (Không trống)" : ""}
                       </option>
                     ))}
                   </select>

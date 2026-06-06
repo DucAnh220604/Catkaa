@@ -140,6 +140,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                     $"Vui lòng kiểm tra lại ngày check-in hoặc trạng thái đặt phòng.");
 
             var roomId = booking.RoomId;
+            var room = await _context.Rooms.FindAsync(roomId);
 
             var checkinRecord = new CheckInRecord
             {
@@ -168,7 +169,8 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 GuestName = checkinRecord.FullName,
                 HotelId = hotelId,
                 RoomId = roomId,
-                CheckInTime = checkinRecord.CheckInTime
+                CheckInTime = checkinRecord.CheckInTime,
+                RoomPassword = room?.RoomPassword
             });
         }
 
@@ -225,7 +227,8 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             var room = await _context.Rooms.FirstOrDefaultAsync(r => r.Id == booking.RoomId);
             if (room != null)
             {
-                room.IsAvailable = true;
+                room.Status = "Cleaning";
+                room.LastCleanedAt = DateTime.Now;
             }
 
             booking.Status = "CheckOut";

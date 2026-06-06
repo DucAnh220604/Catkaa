@@ -13,6 +13,7 @@ namespace Catkaa.MicroPms.Api.DTOs
         public int RoomId { get; set; }
         public string? RoomNumber { get; set; }
         public string? RoomType { get; set; }
+        public string? RoomPassword { get; set; }
         public DateTime CheckInDate { get; set; }
         public DateTime CheckOutDate { get; set; }
         public string Status { get; set; } = string.Empty;

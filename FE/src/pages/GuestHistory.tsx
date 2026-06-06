@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { History, CreditCard, User, AlertCircle, Inbox } from "lucide-react";
+import { History, CreditCard, User, AlertCircle, Inbox, Eye, EyeOff } from "lucide-react";
 import { API_BASE_URL } from "../config/apiConfig";
 import {
   getAuthToken,
@@ -19,6 +19,7 @@ interface BookingResponse {
   checkInDate: string;
   checkOutDate: string;
   status: string;
+  roomPassword?: string;
 }
 
 interface PaymentRecord {
@@ -41,6 +42,7 @@ interface PaymentRecord {
 const BOOKING_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   Pending:    { label: "Chờ xác nhận", bg: "#fff3cd", color: "#856404" },
   Confirmed:  { label: "Đã xác nhận",  bg: "#cce5ff", color: "#004085" },
+  CheckIn:    { label: "Đang ở",       bg: "#d4edda", color: "#155724" },
   CheckedIn:  { label: "Đang ở",       bg: "#d4edda", color: "#155724" },
   Completed:  { label: "Đã trả phòng", bg: "#e2e3e5", color: "#383d41" },
   Cancelled:  { label: "Đã hủy",       bg: "#f8d7da", color: "#721c24" },
@@ -138,6 +140,14 @@ function EmptyState({ label }: { label: string }) {
 const GuestHistory: React.FC = () => {
   const username = getAuthUsername();
   const [activeTab, setActiveTab] = useState<"bookings" | "payments">("bookings");
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<number, boolean>>({});
+
+  const togglePasswordVisibility = (id: number) => {
+    setVisiblePasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [bookingLoading, setBookingLoading] = useState(true);
@@ -283,7 +293,25 @@ const GuestHistory: React.FC = () => {
                     <tr key={b.id}>
                       <td className="py-3 ps-3 fw-semibold" style={{ color: "#1686cb" }}>{b.bookingCode}</td>
                       <td className="py-3">{b.hotelName ?? `#${b.hotelId}`}</td>
-                      <td className="py-3">{b.roomNumber ? `${b.roomNumber}${b.roomType ? ` (${b.roomType})` : ""}` : `#${b.roomId}`}</td>
+                      <td className="py-3">
+                        <div className="fw-medium">
+                          {b.roomNumber ? `${b.roomNumber}${b.roomType ? ` (${b.roomType})` : ""}` : `#${b.roomId}`}
+                        </div>
+                        {(b.status === "CheckIn" || b.status === "CheckedIn") && b.roomPassword && (
+                          <div className="mt-1 d-inline-flex align-items-center gap-2 px-2 py-1" style={{ background: "#dcfce7", border: "1px dashed #22c55e", borderRadius: "6px" }}>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#16a34a" }}>
+                              Passcode: {visiblePasswords[b.id] ? b.roomPassword : "••••••••"}
+                            </span>
+                            <button
+                              onClick={() => togglePasswordVisibility(b.id)}
+                              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: "#15803d" }}
+                              title={visiblePasswords[b.id] ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                            >
+                              {visiblePasswords[b.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3">{formatDate(b.checkInDate)}</td>
                       <td className="py-3">{formatDate(b.checkOutDate)}</td>
                       <td className="py-3 pe-3">

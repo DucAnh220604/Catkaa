@@ -9,7 +9,7 @@ namespace Catkaa.MicroPms.Api.DTOs
         public string RoomNumber { get; set; } = string.Empty;
         public string RoomType { get; set; } = string.Empty;
         public decimal Price { get; set; }
-        public bool IsAvailable { get; set; }
+        public string Status { get; set; } = "Available";
         public string? Description { get; set; }
         public string? MainImageUrl { get; set; }
         public List<string>? ImageGallery { get; set; }

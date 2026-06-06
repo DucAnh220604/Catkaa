@@ -24,7 +24,9 @@ namespace Catkaa.MicroPms.Api.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
-        public bool IsAvailable { get; set; } = true;
+        [Required]
+        [MaxLength(20)]
+        public string Status { get; set; } = "Available";
 
         [MaxLength(2000)]
         public string? Description { get; set; }
@@ -34,5 +36,10 @@ namespace Catkaa.MicroPms.Api.Models
 
         // Lưu dưới dạng JSON array: ["url1","url2",...]
         public string? ImageGallery { get; set; }
+
+        [MaxLength(8)]
+        public string? RoomPassword { get; set; }
+
+        public DateTime? LastCleanedAt { get; set; }
     }
 }

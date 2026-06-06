@@ -327,6 +327,16 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             decimal totalAmount = days * (booking.Room?.Price ?? 0);
 
             booking.Status = "CheckIn";
+            
+            if (booking.Room != null)
+            {
+                booking.Room.Status = "Occupied";
+                if (string.IsNullOrEmpty(booking.Room.RoomPassword))
+                {
+                    booking.Room.RoomPassword = Random.Shared.Next(10000000, 99999999).ToString();
+                }
+            }
+
             _context.Payments.Add(new Payment
             {
                 BookingId = booking.Id,
@@ -338,7 +348,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             });
 
             await _context.SaveChangesAsync();
-            return ServiceResult<object>.Ok("Mock Payment Successful");
+            return ServiceResult<object>.Ok("Mock Payment Successful", new { roomPassword = booking.Room?.RoomPassword });
         }
     }
 }

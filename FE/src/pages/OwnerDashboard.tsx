@@ -163,7 +163,7 @@ const emptyRoomForm = {
   roomNumber: "",
   roomType: "",
   price: "",
-  isAvailable: true,
+  status: "Available",
   description: "",
   mainImageUrl: "",
   imageGallery: "",
@@ -225,6 +225,13 @@ const OwnerDashboard: React.FC = () => {
   const [paymentsError, setPaymentsError] = useState("");
   const [paymentFilterHotelId, setPaymentFilterHotelId] = useState<string>("");
   const [viewPayment, setViewPayment] = useState<PaymentRecord | null>(null);
+
+  // Filters
+  const [userFilterRole, setUserFilterRole] = useState("All");
+  const [paymentFilterStatus, setPaymentFilterStatus] = useState("All");
+  const [paymentFilterDate, setPaymentFilterDate] = useState("");
+  const [roomFilterHotelId, setRoomFilterHotelId] = useState("All");
+  const [roomFilterStatus, setRoomFilterStatus] = useState("All");
 
   // Search & pagination
   const PAGE_SIZE = 8;
@@ -559,7 +566,7 @@ const OwnerDashboard: React.FC = () => {
       roomNumber: room.roomNumber,
       roomType: room.roomType,
       price: String(room.price ?? ""),
-      isAvailable: room.isAvailable,
+      status: room.status,
       description: room.description ?? "",
       mainImageUrl: room.mainImageUrl ?? "",
       imageGallery: room.imageGallery?.join(", ") ?? "",
@@ -583,7 +590,7 @@ const OwnerDashboard: React.FC = () => {
       roomNumber: roomForm.roomNumber.trim(),
       roomType: roomForm.roomType.trim(),
       price: Number(roomForm.price || 0),
-      isAvailable: roomForm.isAvailable,
+      status: roomForm.status,
       description: roomForm.description.trim(),
       mainImageUrl: roomForm.mainImageUrl.trim(),
       imageGallery: roomForm.imageGallery
@@ -718,11 +725,15 @@ const OwnerDashboard: React.FC = () => {
 
   const q = search.toLowerCase();
   const filteredPayments = payments.filter(
-    (p) =>
-      (p.guestName ?? "").toLowerCase().includes(q) ||
-      p.bookingCode.toLowerCase().includes(q) ||
-      (p.hotelName ?? "").toLowerCase().includes(q) ||
-      p.transactionId.toLowerCase().includes(q),
+    (p) => {
+      const matchSearch = (p.guestName ?? "").toLowerCase().includes(q) ||
+                          p.bookingCode.toLowerCase().includes(q) ||
+                          (p.hotelName ?? "").toLowerCase().includes(q) ||
+                          p.transactionId.toLowerCase().includes(q);
+      const matchStatus = paymentFilterStatus === "All" || p.status === paymentFilterStatus;
+      const matchDate = !paymentFilterDate || p.paymentDate.startsWith(paymentFilterDate);
+      return matchSearch && matchStatus && matchDate;
+    }
   );
   const filteredBookings = bookings.filter(
     (b) =>
@@ -735,18 +746,23 @@ const OwnerDashboard: React.FC = () => {
       h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
   );
   const filteredRooms = rooms.filter(
-    (r) =>
-      r.roomNumber.toLowerCase().includes(q) ||
-      r.roomType.toLowerCase().includes(q) ||
-      getHotelNameById(r.hotelId).toLowerCase().includes(q),
+    (r) => {
+      const matchSearch = r.roomNumber.toLowerCase().includes(q) ||
+                          r.roomType.toLowerCase().includes(q) ||
+                          getHotelNameById(r.hotelId).toLowerCase().includes(q);
+      const matchHotel = roomFilterHotelId === "All" || r.hotelId.toString() === roomFilterHotelId;
+      const matchStatus = roomFilterStatus === "All" || r.status === roomFilterStatus;
+      return matchSearch && matchHotel && matchStatus;
+    }
   );
   const filteredUsers = users
     .filter((u) => (isHost ? u.role === "Guest" : u.role !== "Admin"))
-    .filter(
-      (u) =>
-        u.username.toLowerCase().includes(q) ||
-        (u.email ?? "").toLowerCase().includes(q),
-    );
+    .filter((u) => {
+      const matchSearch = u.username.toLowerCase().includes(q) ||
+                          (u.email ?? "").toLowerCase().includes(q);
+      const matchRole = userFilterRole === "All" || u.role === userFilterRole;
+      return matchSearch && matchRole;
+    });
   const paginate = <T,>(arr: T[]) =>
     arr.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const totalPages = (arr: unknown[]) =>
@@ -1861,6 +1877,34 @@ const OwnerDashboard: React.FC = () => {
                     gap: ".75rem",
                   }}
                 >
+                  <select
+                    className="db-inp db-inp select"
+                    style={{ height: 36, width: 160, fontSize: ".82rem" }}
+                    value={roomFilterHotelId}
+                    onChange={(e) => {
+                      setRoomFilterHotelId(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="All">Tất cả khách sạn</option>
+                    {hotels.map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="db-inp db-inp select"
+                    style={{ height: 36, width: 150, fontSize: ".82rem" }}
+                    value={roomFilterStatus}
+                    onChange={(e) => {
+                      setRoomFilterStatus(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="All">Tất cả trạng thái</option>
+                    <option value="Available">Còn trống</option>
+                    <option value="Occupied">Đã có khách</option>
+                    <option value="Cleaning">Đang dọn dẹp</option>
+                  </select>
                   <div className="db-search">
                     <Search className="db-search-ic" size={14} />
                     <input
@@ -1964,9 +2008,9 @@ const OwnerDashboard: React.FC = () => {
                           </td>
                           <td>
                             <span
-                              className={`db-badge ${room.isAvailable ? "db-badge-active" : "db-badge-done"}`}
+                              className={`db-badge ${room.status === "Available" ? "db-badge-active" : room.status === "Cleaning" ? "text-warning bg-warning bg-opacity-10 border border-warning" : "db-badge-done"}`}
                             >
-                              {room.isAvailable ? "Còn trống" : "Đã có khách"}
+                              {room.status === "Available" ? "Còn trống" : room.status === "Cleaning" ? "Đang dọn dẹp" : "Đã có khách"}
                             </span>
                           </td>
                           <td>
@@ -2343,6 +2387,30 @@ const OwnerDashboard: React.FC = () => {
                       <option key={h.id} value={h.id}>{h.name}</option>
                     ))}
                   </select>
+                  <select
+                    className="db-inp db-inp select"
+                    style={{ height: 36, width: 150, fontSize: ".82rem" }}
+                    value={paymentFilterStatus}
+                    onChange={(e) => {
+                      setPaymentFilterStatus(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="All">Tất cả trạng thái</option>
+                    <option value="Success">Thành công</option>
+                    <option value="Pending">Chờ xử lý</option>
+                    <option value="Failed">Thất bại</option>
+                  </select>
+                  <input
+                    type="date"
+                    className="db-inp"
+                    style={{ height: 36, width: 140, fontSize: ".82rem", padding: "0 .5rem" }}
+                    value={paymentFilterDate}
+                    onChange={(e) => {
+                      setPaymentFilterDate(e.target.value);
+                      setPage(1);
+                    }}
+                  />
                   <div className="db-search">
                     <Search className="db-search-ic" size={14} />
                     <input
@@ -2550,6 +2618,20 @@ const OwnerDashboard: React.FC = () => {
                     gap: ".75rem",
                   }}
                 >
+                  <select
+                    className="db-inp db-inp select"
+                    style={{ height: 36, width: 140, fontSize: ".82rem" }}
+                    value={userFilterRole}
+                    onChange={(e) => {
+                      setUserFilterRole(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="All">Tất cả vai trò</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Host">Host</option>
+                    <option value="Guest">Guest</option>
+                  </select>
                   <div className="db-search">
                     <Search className="db-search-ic" size={14} />
                     <input
@@ -2895,16 +2977,17 @@ const OwnerDashboard: React.FC = () => {
                     <label className="db-field-lbl">Trạng thái</label>
                     <select
                       className="db-inp select"
-                      value={roomForm.isAvailable ? "true" : "false"}
+                      value={roomForm.status}
                       onChange={(e) =>
                         setRoomForm((c) => ({
                           ...c,
-                          isAvailable: e.target.value === "true",
+                          status: e.target.value,
                         }))
                       }
                     >
-                      <option value="true">Còn trống</option>
-                      <option value="false">Đã có khách</option>
+                      <option value="Available">Còn trống</option>
+                      <option value="Occupied">Đã có khách</option>
+                      <option value="Cleaning">Đang dọn dẹp</option>
                     </select>
                   </div>
 
@@ -3038,9 +3121,9 @@ const OwnerDashboard: React.FC = () => {
                             </td>
                             <td>
                               <span
-                                className={`db-badge ${room.isAvailable ? "db-badge-active" : "db-badge-done"}`}
+                                className={`db-badge ${room.status === "Available" ? "db-badge-active" : room.status === "Cleaning" ? "text-warning bg-warning bg-opacity-10 border border-warning" : "db-badge-done"}`}
                               >
-                                {room.isAvailable ? "Còn trống" : "Đã có khách"}
+                                {room.status === "Available" ? "Còn trống" : room.status === "Cleaning" ? "Đang dọn dẹp" : "Đã có khách"}
                               </span>
                             </td>
                             <td>
@@ -3702,9 +3785,9 @@ const OwnerDashboard: React.FC = () => {
               <div className="db-info-row">
                 <span className="db-field-lbl">Trạng thái</span>
                 <span
-                  className={`db-badge ${viewRoom.isAvailable ? "db-badge-active" : "db-badge-done"}`}
+                  className={`db-badge ${viewRoom.status === "Available" ? "db-badge-active" : viewRoom.status === "Cleaning" ? "text-warning bg-warning bg-opacity-10 border border-warning" : "db-badge-done"}`}
                 >
-                  {viewRoom.isAvailable ? "Còn trống" : "Đã có khách"}
+                  {viewRoom.status === "Available" ? "Còn trống" : viewRoom.status === "Cleaning" ? "Đang dọn dẹp" : "Đã có khách"}
                 </span>
               </div>
               {viewRoom.description ? (
