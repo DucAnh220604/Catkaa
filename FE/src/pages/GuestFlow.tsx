@@ -5,6 +5,7 @@ import {
   ArrowLeft, ArrowRight, ScanLine, KeyRound,
   MessageSquare, Building2, Check, ShieldCheck,
   CreditCard, Loader2, Phone, ExternalLink, Ban,
+  Camera, UploadCloud,
 } from "lucide-react";
 import CheckInService, { OcrCheckInResult, OcrCheckInResponse } from "../services/checkInService";
 import { getHotels, Hotel } from "../services/hotelService";
@@ -117,11 +118,73 @@ const StepScan = ({
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualData, setManualData] = useState({ fullName: "", idNumber: "", dateOfBirth: "" });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [scanMode, setScanMode] = useState<"camera" | "upload">("camera");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const startCamera = async () => {
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setIsCameraActive(true);
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setCameraError("Không thể truy cập Camera. Vui lòng cấp quyền hoặc tải ảnh lên.");
+    }
+  };
+
+  useEffect(() => {
+    if (scanMode === "camera" && !showManualForm && phase === "idle") {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => {
+      stopCamera();
+    };
+  }, [scanMode, showManualForm, phase]);
+
+  const captureImage = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setError("Lỗi xử lý ảnh từ camera.");
+        setPhase("error");
+        return;
+      }
+      const file = new File([blob], "cccd_capture.jpg", { type: "image/jpeg" });
+      handleProcessFile(file);
+    }, "image/jpeg", 0.9);
+  };
+
+  const handleProcessFile = async (file: File) => {
     setError("");
     setPhase("loading");
+    stopCamera();
     try {
       const result = await CheckInService.ocrCheckIn(hotelId, file);
       setPhase("done");
@@ -131,6 +194,12 @@ const StepScan = ({
       setPhase("error");
       setTimeout(() => setError(""), 5000);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    handleProcessFile(file);
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -225,20 +294,79 @@ const StepScan = ({
           </div>
         ) : (
           <>
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+            
+            {(phase === "idle" || phase === "error") && !showManualForm && (
+              <div className="d-flex bg-secondary bg-opacity-25 rounded-pill p-1 mb-2" style={{ width: "100%", maxWidth: "300px" }}>
+                <button
+                  className={`btn btn-sm flex-grow-1 rounded-pill fw-bold ${scanMode === "camera" ? "btn-light text-dark shadow-sm" : "text-white opacity-75"}`}
+                  onClick={() => setScanMode("camera")}
+                  style={{ fontSize: "12px", border: "none" }}
+                >
+                  <Camera size={14} className="me-1" /> Camera
+                </button>
+                <button
+                  className={`btn btn-sm flex-grow-1 rounded-pill fw-bold ${scanMode === "upload" ? "btn-light text-dark shadow-sm" : "text-white opacity-75"}`}
+                  onClick={() => setScanMode("upload")}
+                  style={{ fontSize: "12px", border: "none" }}
+                >
+                  <UploadCloud size={14} className="me-1" /> Tải ảnh
+                </button>
+              </div>
+            )}
+
             <div
               className="w-100 position-relative rounded-4 overflow-hidden d-flex align-items-center justify-content-center"
               style={{
                 aspectRatio: "1.58",
-                border: `2px dashed ${phase === "done" ? "#22c55e" : phase === "error" ? "#ef4444" : "#0d6efd"}`,
+                border: `2px dashed ${phase === "done" ? "#22c55e" : phase === "error" ? "#ef4444" : scanMode === "camera" ? "transparent" : "#0d6efd"}`,
                 background: phase === "done"
                   ? "rgba(34,197,94,0.07)"
                   : phase === "error"
                   ? "rgba(239,68,68,0.07)"
+                  : scanMode === "camera"
+                  ? "#000"
                   : "rgba(13,110,253,0.05)",
-                cursor: phase === "loading" || phase === "done" ? "default" : "pointer",
+                cursor: (scanMode === "upload" || phase === "error") && phase !== "loading" && phase !== "done" ? "pointer" : "default",
               }}
-              onClick={() => (phase === "idle" || phase === "error") && fileInputRef.current?.click()}
+              onClick={() => {
+                if ((scanMode === "upload" || phase === "error") && phase !== "loading" && phase !== "done") {
+                  fileInputRef.current?.click();
+                }
+              }}
             >
+              {scanMode === "camera" && phase === "idle" && !cameraError && (
+                <>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                  <div className="position-absolute w-100 h-100 p-2" style={{ pointerEvents: "none" }}>
+                    <div className="w-100 h-100 rounded-3 border border-2 opacity-75" style={{ borderColor: "#22c55e", borderStyle: "dashed" }}></div>
+                  </div>
+                </>
+              )}
+
+              {scanMode === "camera" && cameraError && phase === "idle" && (
+                <div className="text-center p-3">
+                  <Camera size={32} className="text-danger opacity-50 mb-2" />
+                  <p className="text-white small fw-bold mb-0">{cameraError}</p>
+                  <button 
+                    className="btn btn-sm btn-outline-light mt-3"
+                    onClick={() => setScanMode("upload")}
+                  >
+                    Chuyển sang Tải ảnh
+                  </button>
+                </div>
+              )}
+
               {phase === "loading" && (
                 <motion.div
                   animate={{ top: ["0%", "100%", "0%"] }}
@@ -249,24 +377,36 @@ const StepScan = ({
               )}
 
               {phase === "loading" ? (
-                <Loader2 size={40} className="text-info spin" />
+                <Loader2 size={40} className="text-info spin position-absolute" style={{ zIndex: 2 }} />
               ) : phase === "done" ? (
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }}>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }} className="position-absolute" style={{ zIndex: 2 }}>
                   <Check size={48} className="text-success" />
                 </motion.div>
-              ) : (
-                <CreditCard size={40} className={phase === "error" ? "text-danger opacity-50" : "text-primary opacity-25"} />
+              ) : scanMode === "upload" && (
+                <CreditCard size={40} className={phase === "error" ? "text-danger opacity-50 position-absolute" : "text-primary opacity-25 position-absolute"} style={{ zIndex: 2 }} />
               )}
 
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: "none" }} />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: "none" }} />
             </div>
+
+            {scanMode === "camera" && phase === "idle" && !cameraError && (
+              <button 
+                className="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm mb-1 d-flex align-items-center justify-content-center"
+                onClick={captureImage}
+                style={{ fontSize: "14px" }}
+              >
+                <Camera size={18} className="me-2" /> 📸 Chụp ảnh CCCD
+              </button>
+            )}
 
             <p className="text-white text-center small fw-bold mb-0">
               {phase === "loading"
                 ? "Đang nhận diện & xác thực booking..."
                 : phase === "done"
                 ? "✓ Xác thực thành công! Đang chuyển..."
-                : "Nhấn vào khung để tải ảnh CCCD lên"}
+                : scanMode === "upload" 
+                ? "Nhấn vào khung để tải ảnh CCCD lên"
+                : ""}
             </p>
 
             {phase === "idle" && (
