@@ -17,9 +17,30 @@ FE/.env.*.local
 # SQLite dev database
 *.db
 *.db-shm
+# .NET build outputs
+BE/**/bin/
+BE/**/obj/
+
+# Sensitive config — keep locally, never commit
+BE/**/appsettings.json
+BE/**/appsettings.Development.json
+BE/**/appsettings.*.json
+
+# Frontend
+FE/node_modules/
+FE/dist/
+FE/.env
+FE/.env.local
+FE/.env.*.local
+
+# SQLite dev database
+*.db
+*.db-shm
 *.db-wal
 
 # OS
 .DS_Store
 Thumbs.db
 *.log
+.vs/
+**/.vs/

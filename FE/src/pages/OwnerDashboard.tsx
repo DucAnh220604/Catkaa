@@ -59,6 +59,13 @@ import {
 } from "../services/roomService";
 import BookingService, { type BookingResponse } from "../services/bookingService";
 import PaymentService, { type PaymentRecord } from "../services/paymentService";
+import {
+  type PricingPlan,
+  getPricingPlans,
+  createPricingPlan,
+  updatePricingPlan,
+  deletePricingPlan
+} from "../services/pricingService";
 import { useMessage } from "../components/MessageContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -143,7 +150,7 @@ const stats = [
   },
 ];
 
-type DashboardView = "overview" | "legal" | "hotels" | "rooms" | "users" | "bookings" | "payments";
+type DashboardView = "overview" | "legal" | "hotels" | "rooms" | "users" | "bookings" | "payments" | "pricing";
 
 const emptyHotelForm = {
   name: "",
@@ -167,6 +174,14 @@ const emptyRoomForm = {
   description: "",
   mainImageUrl: "",
   imageGallery: "",
+};
+const emptyPricingPlanForm: Omit<PricingPlan, "id"> = {
+  name: "",
+  subtitle: "",
+  price: "",
+  features: [],
+  btnText: "",
+  isPopular: false,
 };
 
 const OwnerDashboard: React.FC = () => {
@@ -226,6 +241,16 @@ const OwnerDashboard: React.FC = () => {
   const [paymentFilterHotelId, setPaymentFilterHotelId] = useState<string>("");
   const [viewPayment, setViewPayment] = useState<PaymentRecord | null>(null);
 
+  // Pricing state
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [pricingPlansLoading, setPricingPlansLoading] = useState(false);
+  const [pricingPlansError, setPricingPlansError] = useState("");
+  const [savingPricingPlan, setSavingPricingPlan] = useState(false);
+  const [editingPricingPlanId, setEditingPricingPlanId] = useState<number | null>(null);
+  const [pricingPlanForm, setPricingPlanForm] = useState(emptyPricingPlanForm);
+  const [pricingPlanModalOpen, setPricingPlanModalOpen] = useState(false);
+  const [confirmDeletePricingPlanId, setConfirmDeletePricingPlanId] = useState<number | null>(null);
+
   // Filters
   const [userFilterRole, setUserFilterRole] = useState("All");
   const [paymentFilterStatus, setPaymentFilterStatus] = useState("All");
@@ -278,6 +303,23 @@ const OwnerDashboard: React.FC = () => {
     }
   };
 
+  const loadPricingPlans = async () => {
+    setPricingPlansLoading(true);
+    setPricingPlansError("");
+    try {
+      const data = await getPricingPlans();
+      setPricingPlans(data);
+    } catch (loadError) {
+      setPricingPlansError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Không tải được danh sách gói dịch vụ",
+      );
+    } finally {
+      setPricingPlansLoading(false);
+    }
+  };
+
   const fetchUserDetail = async (userId: number) => {
     try {
       const token = getAuthToken();
@@ -312,6 +354,9 @@ const OwnerDashboard: React.FC = () => {
     if (view === "payments") {
       void loadPayments();
       setPaymentFilterHotelId("");
+    }
+    if (view === "pricing") {
+      void loadPricingPlans();
     }
     setSearch("");
     setPage(1);
@@ -685,6 +730,76 @@ const OwnerDashboard: React.FC = () => {
     }
   };
 
+  // ── Pricing Plan handlers ──
+  const openCreatePricingPlan = () => {
+    setPricingPlanForm(emptyPricingPlanForm);
+    setEditingPricingPlanId(null);
+    setPricingPlansError("");
+    setPricingPlanModalOpen(true);
+  };
+
+  const openEditPricingPlan = (plan: PricingPlan) => {
+    setEditingPricingPlanId(plan.id);
+    setPricingPlanForm({
+      name: plan.name,
+      subtitle: plan.subtitle,
+      price: plan.price,
+      features: plan.features,
+      btnText: plan.btnText,
+      isPopular: plan.isPopular,
+    });
+    setPricingPlansError("");
+    setPricingPlanModalOpen(true);
+  };
+
+  const closePricingPlanModal = () => {
+    setPricingPlanModalOpen(false);
+    setEditingPricingPlanId(null);
+    setPricingPlanForm(emptyPricingPlanForm);
+    setPricingPlansError("");
+  };
+
+  const handlePricingPlanSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSavingPricingPlan(true);
+    setPricingPlansError("");
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Chưa đăng nhập");
+      if (editingPricingPlanId !== null) {
+        await updatePricingPlan(editingPricingPlanId, pricingPlanForm, token);
+        notify("systemConfigSuccess", "success"); // Reuse existing toast
+      } else {
+        await createPricingPlan(pricingPlanForm, token);
+        notify("systemConfigSuccess", "success");
+      }
+      await loadPricingPlans();
+      closePricingPlanModal();
+    } catch (saveError) {
+      setPricingPlansError(saveError instanceof Error ? saveError.message : "Không lưu được gói");
+    } finally {
+      setSavingPricingPlan(false);
+    }
+  };
+
+  const handleDeletePricingPlan = (planId: number) => {
+    setConfirmDeletePricingPlanId(planId);
+  };
+
+  const executeDeletePricingPlan = async (planId: number) => {
+    setConfirmDeletePricingPlanId(null);
+    setPricingPlansError("");
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Chưa đăng nhập");
+      await deletePricingPlan(planId, token);
+      notify("systemConfigSuccess", "success");
+      await loadPricingPlans();
+    } catch (err) {
+      setPricingPlansError(err instanceof Error ? err.message : "Không xóa được gói");
+    }
+  };
+
   const getHotelNameById = (hotelId: number) => {
     if (!hotelId || hotelId === 0) return "Chưa gắn khách sạn";
     const matched = hotels.find((h) => h.id === hotelId);
@@ -1046,6 +1161,12 @@ const OwnerDashboard: React.FC = () => {
                 className={`db-nav-btn ${view === "users" ? "active" : ""}`}
               >
                 <Users size={16} /> Tài khoản
+              </button>
+              <button
+                onClick={() => setView("pricing")}
+                className={`db-nav-btn ${view === "pricing" ? "active" : ""}`}
+              >
+                <BadgeCheck size={16} /> Gói dịch vụ
               </button>
             </>
           ) : null}
@@ -2579,6 +2700,71 @@ const OwnerDashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          ) : view === "pricing" ? (
+            /* ══ PRICING PLANS ══ */
+            <div className="db-card">
+              <div className="db-card-hd" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: ".75rem" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: ".9rem", color: "#0f172a" }}>Danh sách gói dịch vụ</div>
+                  <div style={{ fontSize: ".7rem", color: "#94a3b8", marginTop: "2px" }}>
+                    {pricingPlans.length} gói dịch vụ
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
+                  <button className="db-btn-new" onClick={openCreatePricingPlan}>
+                    <Plus size={14} /> Thêm gói mới
+                  </button>
+                </div>
+              </div>
+
+              {pricingPlansError && <div className="db-err" style={{ margin: "1rem 1.4rem 0" }}>{pricingPlansError}</div>}
+
+              <div className="table-responsive">
+                <table className="table db-tbl mb-0">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Tên gói</th>
+                      <th>Giá tiền</th>
+                      <th>Mô tả ngắn</th>
+                      <th>Nổi bật</th>
+                      <th style={{ width: 70 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pricingPlansLoading ? (
+                      <tr><td colSpan={6} className="db-empty">Đang tải dữ liệu...</td></tr>
+                    ) : pricingPlans.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="db-empty">Chưa có gói dịch vụ nào.</td>
+                      </tr>
+                    ) : (
+                      pricingPlans.map((plan, idx) => (
+                        <tr key={plan.id}>
+                          <td style={{ color: "#94a3b8", fontSize: ".78rem", width: 40 }}>{idx + 1}</td>
+                          <td style={{ fontWeight: 700, color: "#0f172a", fontSize: ".84rem" }}>{plan.name}</td>
+                          <td style={{ color: "#1686cb", fontWeight: 600 }}>{plan.price}</td>
+                          <td style={{ color: "#64748b", fontSize: ".81rem" }}>{plan.subtitle}</td>
+                          <td>
+                            {plan.isPopular ? <span className="db-badge db-badge-active">Nổi bật</span> : <span className="db-badge db-badge-done">Thường</span>}
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                              <button className="db-ibtn db-ibtn-edit" type="button" onClick={() => openEditPricingPlan(plan)} title="Chỉnh sửa">
+                                <Pencil size={13} />
+                              </button>
+                              <button className="db-ibtn db-ibtn-del" type="button" onClick={() => handleDeletePricingPlan(plan.id)} title="Xóa">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             /* ══ USERS ══ */
@@ -4213,6 +4399,132 @@ const OwnerDashboard: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      {/* ══ PRICING PLAN MODALS ══ */}
+      {pricingPlanModalOpen && (
+        <div className="db-modal-backdrop" onClick={closePricingPlanModal}>
+          <div className="db-modal" style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={handlePricingPlanSubmit} style={{ display: "contents" }}>
+              <div className="db-modal-hd">
+                <div>
+                  <div style={{ color: "#fff", fontWeight: 700, fontSize: "1.05rem" }}>
+                    {editingPricingPlanId ? "Chỉnh sửa gói dịch vụ" : "Thêm gói dịch vụ mới"}
+                  </div>
+                </div>
+                <button type="button" onClick={closePricingPlanModal} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 4 }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="db-modal-body" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {pricingPlansError && <div className="db-err">{pricingPlansError}</div>}
+                
+                <div>
+                  <label className="db-field-lbl">Tên gói <span style={{ color: "#e11d48" }}>*</span></label>
+                  <input
+                    required
+                    className="db-inp"
+                    value={pricingPlanForm.name}
+                    onChange={(e) => setPricingPlanForm({ ...pricingPlanForm, name: e.target.value })}
+                    placeholder="VD: Gói Cơ Bản"
+                  />
+                </div>
+                <div>
+                  <label className="db-field-lbl">Mô tả ngắn</label>
+                  <input
+                    className="db-inp"
+                    value={pricingPlanForm.subtitle}
+                    onChange={(e) => setPricingPlanForm({ ...pricingPlanForm, subtitle: e.target.value })}
+                    placeholder="VD: Dành cho khách sạn nhỏ"
+                  />
+                </div>
+                <div>
+                  <label className="db-field-lbl">Giá tiền <span style={{ color: "#e11d48" }}>*</span></label>
+                  <input
+                    required
+                    type="text"
+                    className="db-inp"
+                    value={pricingPlanForm.price}
+                    onChange={(e) => setPricingPlanForm({ ...pricingPlanForm, price: e.target.value })}
+                    placeholder="VD: 199.000 hoặc Miễn phí"
+                  />
+                </div>
+                <div>
+                  <label className="db-field-lbl">Tính năng (mỗi tính năng 1 dòng) <span style={{ color: "#e11d48" }}>*</span></label>
+                  <textarea
+                    required
+                    className="db-inp textarea"
+                    style={{ minHeight: "100px" }}
+                    value={(pricingPlanForm.features || []).map((f: any) => f.name || f).join('\n')}
+                    onChange={(e) => setPricingPlanForm({ 
+                      ...pricingPlanForm, 
+                      features: e.target.value.split('\n').filter(Boolean).map(line => ({ name: line, value: "true", highlight: false, disabled: false })) 
+                    })}
+                    placeholder="Quản lý 1 khách sạn&#10;Hỗ trợ 24/7&#10;Tối đa 50 phòng"
+                  />
+                </div>
+                <div>
+                  <label className="db-field-lbl">Text nút bấm</label>
+                  <input
+                    className="db-inp"
+                    value={pricingPlanForm.btnText}
+                    onChange={(e) => setPricingPlanForm({ ...pricingPlanForm, btnText: e.target.value })}
+                    placeholder="VD: Mua Ngay"
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  <input
+                    type="checkbox"
+                    id="isPopular"
+                    checked={pricingPlanForm.isPopular}
+                    onChange={(e) => setPricingPlanForm({ ...pricingPlanForm, isPopular: e.target.checked })}
+                    style={{ width: 16, height: 16 }}
+                  />
+                  <label htmlFor="isPopular" style={{ fontSize: ".875rem", fontWeight: 600, color: "#0f172a", cursor: "pointer" }}>Đánh dấu là gói nổi bật</label>
+                </div>
+              </div>
+              <div className="db-modal-foot">
+                <button type="button" className="db-btn-ghost" onClick={closePricingPlanModal} disabled={savingPricingPlan}>Hủy</button>
+                <button type="submit" className="db-btn-primary" disabled={savingPricingPlan}>
+                  {savingPricingPlan ? "Đang lưu..." : "Lưu gói dịch vụ"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {confirmDeletePricingPlanId !== null && (
+        <div className="db-modal-backdrop" onClick={() => setConfirmDeletePricingPlanId(null)}>
+          <div className="db-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+            <div className="db-modal-hd" style={{ background: "linear-gradient(140deg,#7f1d1d 0%,#991b1b 100%)" }}>
+              <div>
+                <div style={{ color: "#fff", fontWeight: 700, fontSize: "1rem" }}>Xác nhận xóa</div>
+                <div style={{ color: "rgba(255,255,255,.5)", fontSize: ".72rem", marginTop: 2 }}>Hành động này không thể hoàn tác</div>
+              </div>
+              <button onClick={() => setConfirmDeletePricingPlanId(null)} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", padding: 4 }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="db-modal-body" style={{ textAlign: "center", padding: "2rem 1.5rem" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem" }}>
+                <Trash2 size={24} color="#e11d48" />
+              </div>
+              <p style={{ fontWeight: 700, color: "#0f172a", marginBottom: ".5rem" }}>Xóa gói dịch vụ này?</p>
+              <p style={{ color: "#64748b", fontSize: ".85rem", margin: 0 }}>Gói dịch vụ sẽ bị gỡ khỏi trang chủ và không thể khôi phục.</p>
+            </div>
+            <div className="db-modal-foot" style={{ justifyContent: "center", gap: "1rem" }}>
+              <button className="db-btn-ghost" style={{ minWidth: 110 }} onClick={() => setConfirmDeletePricingPlanId(null)}>Hủy bỏ</button>
+              <button
+                className="db-btn-primary"
+                style={{ minWidth: 110, background: "linear-gradient(135deg,#dc2626,#b91c1c)", boxShadow: "0 4px 12px rgba(220,38,38,.28)" }}
+                onClick={() => executeDeletePricingPlan(confirmDeletePricingPlanId)}
+              >
+                Xóa gói
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

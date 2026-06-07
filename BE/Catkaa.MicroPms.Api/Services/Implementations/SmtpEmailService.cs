@@ -26,15 +26,14 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
         {
             var adminEmail = _configuration["SmtpSettings:SenderEmail"] ?? "catkaofficial@gmail.com";
             var subject = $"Đăng Ký Dịch Vụ - {dto.PackageName} - {dto.Name}";
-            var body = $@"
-                <h3>Khách hàng vừa đăng ký gói dịch vụ mới!</h3>
-                <p><strong>Tên:</strong> {dto.Name}</p>
-                <p><strong>Số điện thoại:</strong> {dto.Phone}</p>
-                <p><strong>Email:</strong> {dto.Email}</p>
-                <p><strong>Gói đăng ký:</strong> {dto.PackageName}</p>
-                <p><strong>Lời nhắn:</strong> {dto.Message}</p>
-                <p>Vui lòng liên hệ để hỗ trợ và giao phần cứng.</p>
-            ";
+            var templatePath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "EmailTemplates", "ContactTemplate.html");
+            var body = await System.IO.File.ReadAllTextAsync(templatePath);
+            
+            body = body.Replace("{{Name}}", dto.Name);
+            body = body.Replace("{{Phone}}", dto.Phone);
+            body = body.Replace("{{Email}}", dto.Email);
+            body = body.Replace("{{PackageName}}", string.IsNullOrEmpty(dto.PackageName) ? "Không xác định" : dto.PackageName);
+            body = body.Replace("{{Message}}", string.IsNullOrEmpty(dto.Message) ? "(Không có lời nhắn)" : dto.Message);
             await SendEmailAsync(adminEmail, subject, body);
         }
 
