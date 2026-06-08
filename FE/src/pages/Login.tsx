@@ -77,7 +77,7 @@ const Login: React.FC = () => {
             zIndex: 1,
           }}
         >
-          <source src="/images/login.mp4" type="video/mp4" />
+          <source src="/images/login1.mp4" type="video/mp4" />
         </video>
 
         {/* Lớp phủ gradient nhẹ để video sâu hơn */}

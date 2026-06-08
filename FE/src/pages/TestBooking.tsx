@@ -667,6 +667,11 @@ export default function TestBooking() {
           height: 100%;
           cursor: pointer;
         }
+
+        .form-control::placeholder {
+          color: #adb5bd !important;
+          opacity: 0.4 !important;
+        }
       `}</style>
     </div>
   );
