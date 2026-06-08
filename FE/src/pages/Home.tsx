@@ -458,21 +458,19 @@ const Home: React.FC = () => {
                   {services.map((svc, idx) => (
                     <button
                       key={idx}
-                      className={`tab-btn ${activeService === idx ? "active-btn" : ""}`}
+                      className="btn border-0 rounded-0 w-100 text-start d-flex align-items-center"
                       onClick={() => setActiveService(idx)}
                       style={{
-                        textAlign: "left",
-                        width: "100%",
                         padding: "20px",
-                        borderBottom: "1px solid #eee",
+                        borderBottom: "1px solid #eee !important",
                         backgroundColor: activeService === idx ? "#f8f9fa" : "transparent",
                         borderLeft: activeService === idx ? "4px solid #1686cb" : "4px solid transparent",
                         transition: "all 0.3s ease",
                       }}
                     >
-                      <span className="fw-bold" style={{ color: "#1686cb", marginRight: "15px" }}>0{idx + 1}.</span> 
-                      <span className="fw-bold text-dark fs-5">{svc.title}</span>
-                      <i className="fa-solid fa-arrow-right float-end mt-1" style={{ color: activeService === idx ? "#1686cb" : "#ccc" }}></i>
+                      <span className="fw-bold fs-5" style={{ color: "#1686cb", minWidth: "40px" }}>0{idx + 1}.</span> 
+                      <span className="fw-bold text-dark fs-5 flex-grow-1">{svc.title}</span>
+                      <i className="fa-solid fa-arrow-right" style={{ color: activeService === idx ? "#1686cb" : "#ccc" }}></i>
                     </button>
                   ))}
                 </div>
