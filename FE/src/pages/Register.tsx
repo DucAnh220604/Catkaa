@@ -153,8 +153,8 @@ const Register: React.FC = () => {
           {/* Mobile Logo Only */}
           <div className="text-center d-md-none mb-4">
             <img
-              src="/images/catkaa.jpg"
-              alt="CATKAA"
+              src="/images/catka.jpg"
+              alt="CATKA"
               style={{ height: "40px", borderRadius: "8px" }}
             />
           </div>
@@ -167,7 +167,7 @@ const Register: React.FC = () => {
               Tạo tài khoản
             </h3>
             <p className="text-muted small">
-              Đăng ký để bắt đầu sử dụng dịch vụ CATKAA.
+              Đăng ký để bắt đầu sử dụng dịch vụ CATKA.
             </p>
           </div>
 

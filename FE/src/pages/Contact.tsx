@@ -50,7 +50,7 @@ const Contact: React.FC = () => {
         <div className="auto-container text-center">
           <h1 className="text-white fw-bold display-5 mb-2">Liên Hệ Với Chúng Tôi</h1>
           <p className="text-white opacity-75">
-            Hãy để CATKAA đồng hành cùng bạn nâng tầm dịch vụ Homestay.
+            Hãy để CATKA đồng hành cùng bạn nâng tầm dịch vụ Homestay.
           </p>
         </div>
       </section>

@@ -32,7 +32,7 @@ const StepWelcome = ({
     <div className="px-3 py-2 text-white d-flex align-items-center gap-2" style={{ background: "#1686cb" }}>
       <Building2 size={14} />
       <span className="fw-bold text-truncate" style={{ fontSize: "11px", maxWidth: 140 }}>
-        {selectedHotel?.name ?? "CATKAA Check-in"}
+        {selectedHotel?.name ?? "CATKA Check-in"}
       </span>
       <div className="ms-auto opacity-50"><Phone size={12} /></div>
     </div>
@@ -516,7 +516,7 @@ const StepCheckInDone = ({
           {data?.bookingCode && <Row label="Mã booking" value={data.bookingCode} />}
           <div className="d-flex gap-2 align-items-center mt-3 pt-2 border-top">
             <ShieldCheck size={13} className="text-primary flex-shrink-0" />
-            <span style={{ fontSize: "10px", color: "#666" }}>Đã xác thực & ghi nhận bởi CATKAA</span>
+            <span style={{ fontSize: "10px", color: "#666" }}>Đã xác thực & ghi nhận bởi CATKA</span>
           </div>
         </div>
       </div>
@@ -538,7 +538,7 @@ const StepCheckInDone = ({
         )}
         <Link
           to="/"
-          onClick={() => sessionStorage.removeItem("catkaa_checkin_state")}
+          onClick={() => sessionStorage.removeItem("catka_checkin_state")}
           className="btn btn-outline-secondary w-100 rounded-pill fw-bold small text-decoration-none"
           style={{ fontSize: "12px" }}
         >
@@ -697,7 +697,7 @@ const StepPayment = ({
         {paymentConfirmed ? (
           <Link
             to="/"
-            onClick={() => sessionStorage.removeItem("catkaa_checkin_state")}
+            onClick={() => sessionStorage.removeItem("catka_checkin_state")}
             className="btn w-100 rounded-pill text-white fw-bold py-2 text-decoration-none"
             style={{ background: "#16a34a", fontSize: "13px" }}
           >
@@ -737,7 +737,7 @@ const StepPayment = ({
         {!paymentConfirmed && (
           <Link
             to="/"
-            onClick={() => sessionStorage.removeItem("catkaa_checkin_state")}
+            onClick={() => sessionStorage.removeItem("catka_checkin_state")}
             className="btn w-100 rounded-pill fw-bold py-2 text-decoration-none"
             style={{ background: "#f1f5f9", color: "#64748b", fontSize: "12px" }}
           >
@@ -778,7 +778,7 @@ export default function GuestFlow() {
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
-    const savedState = sessionStorage.getItem("catkaa_checkin_state");
+    const savedState = sessionStorage.getItem("catka_checkin_state");
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
@@ -795,7 +795,7 @@ export default function GuestFlow() {
   // Save state to sessionStorage on change
   useEffect(() => {
     const stateToSave = { step, selectedHotel, checkInResult, roomInfo };
-    sessionStorage.setItem("catkaa_checkin_state", JSON.stringify(stateToSave));
+    sessionStorage.setItem("catka_checkin_state", JSON.stringify(stateToSave));
   }, [step, selectedHotel, checkInResult, roomInfo]);
 
   useEffect(() => {
@@ -827,9 +827,9 @@ export default function GuestFlow() {
           {/* ── Cột trái: điều hướng ── */}
           <div className="col-lg-5">
             <div className="sec-title mb-4">
-              <div className="subtitle"><span className="dot"></span> CATKAA SECURITY</div>
+              <div className="subtitle"><span className="dot"></span> CATKA SECURITY</div>
               <h2 className="fw-900 text-dark" style={{ fontSize: "42px", lineHeight: "1.1" }}>
-                Quy trình<br /><span className="text-catkaa">Check-in Số</span>
+                Quy trình<br /><span className="text-catka">Check-in Số</span>
               </h2>
             </div>
             <p className="text-muted mb-5">

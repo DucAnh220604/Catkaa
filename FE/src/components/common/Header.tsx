@@ -52,10 +52,10 @@ const Header: React.FC = () => {
             <div className="logo-box flex-shrink-0">
               <Link to="/" className="d-flex align-items-center text-decoration-none">
                 <div className="bg-white p-1 rounded-3 shadow-sm" style={{ border: '1px solid #f0f0f0' }}>
-                  <img src="/images/catkaa.jpg" alt="CATKAA" style={{ height: "40px", width: "auto", display: 'block' }} />
+                  <img src="/images/catka.jpg" alt="CATKA" style={{ height: "40px", width: "auto", display: 'block' }} />
                 </div>
                 <div className="ms-2 d-flex flex-column">
-                  <span className="catkaa-text" style={{ color: "#1686cb", fontWeight: "900", fontSize: "20px", lineHeight: "1" }}>CATKAA</span>
+                  <span className="catka-text" style={{ color: "#1686cb", fontWeight: "900", fontSize: "20px", lineHeight: "1" }}>CATKA</span>
                   <span className="d-none d-md-block" style={{ color: "#333", fontSize: "7px", fontWeight: "700", letterSpacing: "1px", marginTop: '2px' }}>LEGAL FOUNDATION, FREEDOM OF OPERATION</span>
                 </div>
               </Link>
@@ -166,8 +166,8 @@ const Header: React.FC = () => {
       >
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div className="d-flex align-items-center">
-            <img src="/images/catkaa.jpg" alt="CATKAA" style={{ height: "35px", borderRadius: '4px' }} />
-            <span className="ms-2 fw-bold" style={{ color: '#1686cb', fontSize: '18px' }}>CATKAA</span>
+            <img src="/images/catka.jpg" alt="CATKA" style={{ height: "35px", borderRadius: '4px' }} />
+            <span className="ms-2 fw-bold" style={{ color: '#1686cb', fontSize: '18px' }}>CATKA</span>
           </div>
           <button className="border-0 bg-transparent" onClick={toggleMobileMenu}>
             <X size={28} />
@@ -349,7 +349,7 @@ const Header: React.FC = () => {
           .login-nav-btn { padding: 6px 14px; font-size: 12px; }
         }
         @media (max-width: 480px) {
-          .catkaa-text { font-size: 18px !important; }
+          .catka-text { font-size: 18px !important; }
           .checkin-nav-btn { padding: 6px 12px; font-size: 11px; }
         }
       `}</style>

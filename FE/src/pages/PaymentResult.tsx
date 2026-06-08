@@ -49,7 +49,7 @@ export default function PaymentResult() {
         }}
       >
         <div style={{ color: "rgba(255,255,255,.35)", fontSize: 11, letterSpacing: 3, textTransform: "uppercase" }}>
-          CATKAA · Thanh toán
+          CATKA · Thanh toán
         </div>
       </div>
 
@@ -100,7 +100,7 @@ export default function PaymentResult() {
 
         <p style={{ color: "#64748b", fontSize: 14, margin: "0 0 20px", lineHeight: 1.6 }}>
           {success
-            ? "Đặt phòng đã được xác nhận. Chúc bạn có kỳ nghỉ tuyệt vời tại CATKAA!"
+            ? "Đặt phòng đã được xác nhận. Chúc bạn có kỳ nghỉ tuyệt vời tại CATKA!"
             : "Giao dịch không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."}
         </p>
 
@@ -198,7 +198,7 @@ export default function PaymentResult() {
           transition: "opacity .6s .3s",
         }}
       >
-        Được bảo mật bởi VNPay · CATKAA MicroPMS
+        Được bảo mật bởi VNPay · CATKA MicroPMS
       </div>
     </div>
   );

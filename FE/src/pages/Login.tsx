@@ -104,8 +104,8 @@ const Login: React.FC = () => {
           {/* Mobile Logo Only */}
           <div className="text-center d-md-none mb-4">
             <img
-              src="/images/catkaa.jpg"
-              alt="CATKAA"
+              src="/images/catka.jpg"
+              alt="CATKA"
               style={{ height: "40px", borderRadius: "8px" }}
             />
           </div>
@@ -115,7 +115,7 @@ const Login: React.FC = () => {
               className="fw-bold text-dark mb-1"
               style={{ letterSpacing: "-0.5px" }}
             >
-              Quản trị CATKAA
+              Quản trị CATKA
             </h3>
             <p className="text-muted small">
               Chào mừng trở lại! Vui lòng đăng nhập.
@@ -142,7 +142,7 @@ const Login: React.FC = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="admin@catkaa.com"
+                  placeholder="admin@catka.com"
                   value={username}
                   onChange={(event) => { setUsername(event.target.value); setError(""); }}
                   autoComplete="username"

@@ -18,7 +18,7 @@ type JwtPayload = {
 };
 
 
-const TOKEN_KEY = "catkaa_auth_token";
+const TOKEN_KEY = "catka_auth_token";
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {

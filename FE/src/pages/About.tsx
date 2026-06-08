@@ -17,7 +17,7 @@ const About: React.FC = () => {
         }}
       >
         <div className="auto-container text-center">
-          <h1 className="text-white fw-bold display-4 mb-2">Về CATKAA</h1>
+          <h1 className="text-white fw-bold display-4 mb-2">Về CATKA</h1>
           <p
             className="text-white opacity-75 mx-auto"
             style={{ maxWidth: "600px" }}
@@ -35,7 +35,7 @@ const About: React.FC = () => {
               <div className="position-relative">
                 <img 
                   src="https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1000&auto=format&fit=crop" 
-                  alt="Văn phòng CATKAA" 
+                  alt="Văn phòng CATKA" 
                   className="w-100 rounded-4 shadow"
                 />
                 <div 
@@ -60,7 +60,7 @@ const About: React.FC = () => {
                 Việc kinh doanh Homestay chưa bao giờ là dễ dàng. Chủ nhà luôn phải đối mặt với hàng tá rủi ro pháp lý, rắc rối trong khâu vận hành bảo mật, và việc đăng ký lưu trú rườm rà làm mất đi trải nghiệm tốt của khách hàng.
               </p>
               <p className="text-muted mb-4" style={{ lineHeight: "1.8", fontSize: "16px" }}>
-                <strong>CATKAA</strong> ra đời với một sứ mệnh duy nhất: <strong>Trở thành "ngôi nhà thứ hai" của các chủ Homestay</strong>. Chúng tôi mang đến hệ sinh thái công nghệ All-in-one giúp giải quyết triệt để 100% các thủ tục pháp lý (eKYC, khai báo lưu trú) và tự động hóa toàn bộ quy trình nhận/trả phòng.
+                <strong>CATKA</strong> ra đời với một sứ mệnh duy nhất: <strong>Trở thành "ngôi nhà thứ hai" của các chủ Homestay</strong>. Chúng tôi mang đến hệ sinh thái công nghệ All-in-one giúp giải quyết triệt để 100% các thủ tục pháp lý (eKYC, khai báo lưu trú) và tự động hóa toàn bộ quy trình nhận/trả phòng.
               </p>
               <div className="d-flex align-items-center gap-4 mt-5">
                 <div className="d-flex flex-column">
@@ -85,7 +85,7 @@ const About: React.FC = () => {
             <div className="subtitle" style={{ color: "#1686cb" }}>
               <span className="dot" style={{ backgroundColor: "#1686cb" }}></span> GIÁ TRỊ CỐT LÕI
             </div>
-            <h2 className="title fw-bold">Tại sao nên chọn CATKAA?</h2>
+            <h2 className="title fw-bold">Tại sao nên chọn CATKA?</h2>
           </div>
           <div className="row g-4 mt-4">
             <div className="col-lg-4 col-md-6">
@@ -130,7 +130,7 @@ const About: React.FC = () => {
         <div className="auto-container text-center py-4">
           <h3 className="text-white fw-bold mb-3">Sẵn sàng thay đổi cách quản lý Homestay?</h3>
           <p className="text-white opacity-75 mb-4 mx-auto" style={{ maxWidth: "600px" }}>
-            Gia nhập cộng đồng hơn 200+ chủ nhà đang sử dụng CATKAA để thảnh thơi vận hành mỗi ngày.
+            Gia nhập cộng đồng hơn 200+ chủ nhà đang sử dụng CATKA để thảnh thơi vận hành mỗi ngày.
           </p>
           <div className="d-flex justify-content-center gap-3 mt-4" style={{ position: "relative", zIndex: 10 }}>
             <Link to="/services" className="btn bg-white rounded-pill px-4 py-2 fw-bold shadow-sm" style={{ color: "#1686cb" }}>

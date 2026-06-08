@@ -32,14 +32,14 @@ const Footer: React.FC = () => {
                       }}
                     >
                       <img
-                        src="/images/catkaa.jpg"
-                        alt="CATKAA"
+                        src="/images/catka.jpg"
+                        alt="CATKA"
                         style={{ maxHeight: "40px", borderRadius: "4px" }}
                       />
                     </div>
-                    <div className="catkaa-brand-group ms-3">
+                    <div className="catka-brand-group ms-3">
                       <span
-                        className="catkaa-brand-name"
+                        className="catka-brand-name"
                         style={{
                           color: "#1686cb",
                           fontWeight: "800",
@@ -48,7 +48,7 @@ const Footer: React.FC = () => {
                           textTransform: "uppercase",
                         }}
                       >
-                        CATKAA
+                        CATKA
                       </span>
                     </div>
                   </Link>
@@ -204,7 +204,7 @@ const Footer: React.FC = () => {
                     paddingBottom: "10px",
                   }}
                 >
-                  Hệ Thống của CATKAA
+                  Hệ Thống của CATKA
                   <span
                     style={{
                       position: "absolute",
@@ -359,7 +359,7 @@ const Footer: React.FC = () => {
             className="copyright-text text-center"
             style={{ color: "#6c727f", fontSize: "13px" }}
           >
-            © Copyright 2026 CATKAA. All Rights Reserved.
+            © Copyright 2026 CATKA. All Rights Reserved.
           </div>
         </div>
       </div>

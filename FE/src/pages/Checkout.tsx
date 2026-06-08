@@ -53,7 +53,7 @@ const Checkout: React.FC = () => {
                     <Check size={34} />
                   </div>
                   <h5 className="fw-bold text-success mb-2">Trả phòng thành công!</h5>
-                  <p className="text-muted small mb-4">Cảm ơn bạn đã lựa chọn dịch vụ của CATKAA. Hẹn gặp lại bạn lần sau.</p>
+                  <p className="text-muted small mb-4">Cảm ơn bạn đã lựa chọn dịch vụ của CATKA. Hẹn gặp lại bạn lần sau.</p>
                   
                   <button 
                     className="btn w-100 rounded-pill text-white fw-bold py-2 shadow-sm"

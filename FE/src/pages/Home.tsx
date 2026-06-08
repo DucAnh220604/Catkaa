@@ -131,7 +131,7 @@ const Home: React.FC = () => {
           <div className="main-banner-img wow fadeInUp bounce-y">
             <img
               src="/images/anhnen.jpg"
-              alt="CATKAA Banner"
+              alt="CATKA Banner"
               style={{ borderRadius: "30px" }}
             />
           </div>
@@ -154,7 +154,7 @@ const Home: React.FC = () => {
                   className="banner-title wow fadeInUp"
                   style={{ marginBottom: "35px" }}
                 >
-                  <h1>CATKAA</h1>
+                  <h1>CATKA</h1>
                   <span className="banner-slogan">
                     ĐIỂM TỰA PHÁP LÝ <br /> TỰ DO VẬN HÀNH
                   </span>
@@ -165,7 +165,7 @@ const Home: React.FC = () => {
                   data-wow-duration="1500ms"
                 >
                   <div className="banner-desc wow fadeInUp">
-                    CATKAA mang đến giải pháp công nghệ dành riêng cho các chủ
+                    CATKA mang đến giải pháp công nghệ dành riêng cho các chủ
                     Homestay tại Việt Nam. Từ những căn nhà sàn vùng cao đến
                     villa gỗ Đà Lạt, chúng tôi giúp bạn vận hành tự động và
                     chuyên nghiệp hơn.
@@ -226,14 +226,14 @@ const Home: React.FC = () => {
                 <div className="main-img-wrapper">
                   <img
                     src="https://images.unsplash.com/photo-1562133567-b6a0a9c7e6eb?q=80&w=1000&auto=format&fit=crop"
-                    alt="CATKAA Modern Interior"
+                    alt="CATKA Modern Interior"
                     className="w-100 h-100 object-fit-cover"
                   />
                 </div>
                 <div className="sub-img-wrapper">
                   <img
                     src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1000&auto=format&fit=crop"
-                    alt="CATKAA Exterior"
+                    alt="CATKA Exterior"
                     className="w-100 h-100 object-fit-cover"
                   />
                 </div>
@@ -269,7 +269,7 @@ const Home: React.FC = () => {
                 className="mb-4 text-muted"
                 style={{ fontSize: "18px", lineHeight: "1.8" }}
               >
-                Chúng tôi không chỉ cung cấp phần mềm, CATKAA xây dựng một hệ
+                Chúng tôi không chỉ cung cấp phần mềm, CATKA xây dựng một hệ
                 sinh thái toàn diện từ
                 <strong> Pháp lý, Vận hành đến An ninh</strong>. Giúp các chủ
                 nhà thảnh thơi kinh doanh trong khi khách hàng tận hưởng sự an
@@ -357,7 +357,7 @@ const Home: React.FC = () => {
                   >
                     <img
                       src={`/images/${num}.png`}
-                      alt={`Tính năng CATKAA ${num}`}
+                      alt={`Tính năng CATKA ${num}`}
                       className="w-100 h-100"
                       style={{
                         objectFit: "contain",
@@ -412,7 +412,7 @@ const Home: React.FC = () => {
               </div>
               <div className="sec-title-right mb-lg-50 mt-5 mt-lg--0">
                 <div className="text">
-                  CATKAA cung cấp hệ sinh thái toàn diện giúp chủ homestay giải
+                  CATKA cung cấp hệ sinh thái toàn diện giúp chủ homestay giải
                   quyết bài toán vận hành và pháp lý một cách tự động, minh bạch
                   và an toàn.
                 </div>

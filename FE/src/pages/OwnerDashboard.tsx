@@ -1059,8 +1059,8 @@ const OwnerDashboard: React.FC = () => {
                 }}
               >
                 <img
-                  src="/images/catkaa.jpg"
-                  alt="CATKAA"
+                  src="/images/catka.jpg"
+                  alt="CATKA"
                   style={{
                     height: "22px",
                     borderRadius: "5px",
@@ -1077,7 +1077,7 @@ const OwnerDashboard: React.FC = () => {
                     lineHeight: 1,
                   }}
                 >
-                  CATKAA
+                  CATKA
                 </div>
                 <div
                   style={{
@@ -3439,7 +3439,7 @@ const OwnerDashboard: React.FC = () => {
                     onChange={(e) =>
                       setHotelForm((c) => ({ ...c, name: e.target.value }))
                     }
-                    placeholder="CATKAA Hotel"
+                    placeholder="CATKA Hotel"
                     required
                   />
                 </div>
@@ -3647,7 +3647,7 @@ const OwnerDashboard: React.FC = () => {
                     onChange={(e) =>
                       setUserForm((c) => ({ ...c, email: e.target.value }))
                     }
-                    placeholder="email@catkaa.com"
+                    placeholder="email@catka.com"
                   />
                 </div>
                 <div>
