@@ -239,6 +239,7 @@ const OwnerDashboard: React.FC = () => {
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentsError, setPaymentsError] = useState("");
   const [paymentFilterHotelId, setPaymentFilterHotelId] = useState<string>("");
+  const [paymentFilterType, setPaymentFilterType] = useState<string>("");
   const [viewPayment, setViewPayment] = useState<PaymentRecord | null>(null);
 
   // Pricing state
@@ -354,6 +355,7 @@ const OwnerDashboard: React.FC = () => {
     if (view === "payments") {
       void loadPayments();
       setPaymentFilterHotelId("");
+      setPaymentFilterType("");
     }
     if (view === "pricing") {
       void loadPricingPlans();
@@ -698,11 +700,11 @@ const OwnerDashboard: React.FC = () => {
     }
   };
 
-  const loadPayments = async (filterHotelId?: number) => {
+  const loadPayments = async (filterHotelId?: number, type?: string) => {
     setPaymentsLoading(true);
     setPaymentsError("");
     try {
-      const data = await PaymentService.getPayments(filterHotelId);
+      const data = await PaymentService.getPayments(filterHotelId, type);
       setPayments(data);
     } catch (err) {
       setPaymentsError(err instanceof Error ? err.message : "Không tải được danh sách thanh toán");
@@ -842,7 +844,7 @@ const OwnerDashboard: React.FC = () => {
   const filteredPayments = payments.filter(
     (p) => {
       const matchSearch = (p.guestName ?? "").toLowerCase().includes(q) ||
-                          p.bookingCode.toLowerCase().includes(q) ||
+                          (p.bookingCode ?? "").toLowerCase().includes(q) ||
                           (p.hotelName ?? "").toLowerCase().includes(q) ||
                           p.transactionId.toLowerCase().includes(q);
       const matchStatus = paymentFilterStatus === "All" || p.status === paymentFilterStatus;
@@ -2486,7 +2488,7 @@ const OwnerDashboard: React.FC = () => {
                   <button
                     className="db-btn-ghost"
                     style={{ height: 36, padding: "0 .85rem", fontSize: ".8rem", display: "flex", alignItems: "center", gap: ".4rem" }}
-                    onClick={() => void loadPayments(paymentFilterHotelId ? Number(paymentFilterHotelId) : undefined)}
+                    onClick={() => void loadPayments(paymentFilterHotelId ? Number(paymentFilterHotelId) : undefined, paymentFilterType ? paymentFilterType : undefined)}
                     disabled={paymentsLoading}
                     title="Tải lại"
                   >
@@ -2495,12 +2497,26 @@ const OwnerDashboard: React.FC = () => {
                   </button>
                   <select
                     className="db-inp db-inp select"
+                    style={{ height: 36, width: 150, fontSize: ".82rem" }}
+                    value={paymentFilterType}
+                    onChange={(e) => {
+                      setPaymentFilterType(e.target.value);
+                      setPage(1);
+                      void loadPayments(paymentFilterHotelId ? Number(paymentFilterHotelId) : undefined, e.target.value ? e.target.value : undefined);
+                    }}
+                  >
+                    <option value="">Tất cả loại GD</option>
+                    <option value="RoomBooking">Đặt phòng</option>
+                    <option value="PlanSubscription">Mua gói</option>
+                  </select>
+                  <select
+                    className="db-inp db-inp select"
                     style={{ height: 36, width: 200, fontSize: ".82rem", padding: "0 2rem 0 .75rem" }}
                     value={paymentFilterHotelId}
                     onChange={(e) => {
                       setPaymentFilterHotelId(e.target.value);
                       setPage(1);
-                      void loadPayments(e.target.value ? Number(e.target.value) : undefined);
+                      void loadPayments(e.target.value ? Number(e.target.value) : undefined, paymentFilterType ? paymentFilterType : undefined);
                     }}
                   >
                     <option value="">Tất cả khách sạn</option>
@@ -2550,10 +2566,10 @@ const OwnerDashboard: React.FC = () => {
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Khách</th>
-                      <th>Mã booking</th>
-                      <th>Khách sạn</th>
-                      <th>Phòng</th>
+                      <th>Loại GD</th>
+                      <th>Khách hàng</th>
+                      <th>Mã GD / Booking</th>
+                      <th>Sản phẩm / Dịch vụ</th>
                       <th>Số tiền</th>
                       <th>Ngày thanh toán</th>
                       <th>Trạng thái</th>
@@ -2575,23 +2591,36 @@ const OwnerDashboard: React.FC = () => {
                     ) : (
                       paginate(filteredPayments).map((p, idx) => {
                         const status = getPaymentStatusLabel(p.status);
+                        const isPlan = p.type === "PlanSubscription";
+                        const customerName = isPlan ? (p.username ?? "—") : (p.guestName ?? "—");
                         return (
                           <tr key={p.id}>
                             <td style={{ color: "#94a3b8", fontSize: ".78rem", width: 40 }}>
                               {(page - 1) * PAGE_SIZE + idx + 1}
                             </td>
                             <td>
+                              <span className={`db-badge db-badge-${isPlan ? 'warning' : 'primary'}`} style={{ fontSize: ".7rem", padding: "2px 6px" }}>
+                                {isPlan ? "Mua gói" : "Đặt phòng"}
+                              </span>
+                            </td>
+                            <td>
                               <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
                                 <div className="db-av" style={{ background: "#f0fdf4", color: "#16a34a", fontSize: ".8rem" }}>
-                                  {(p.guestName ?? "?").charAt(0).toUpperCase()}
+                                  {(customerName !== "—" ? customerName : "?").charAt(0).toUpperCase()}
                                 </div>
-                                <span style={{ fontWeight: 700, color: "#0f172a", fontSize: ".84rem" }}>{p.guestName ?? "—"}</span>
+                                <span style={{ fontWeight: 700, color: "#0f172a", fontSize: ".84rem" }}>{customerName}</span>
                               </div>
                             </td>
-                            <td style={{ color: "#64748b", fontSize: ".81rem", fontFamily: "monospace" }}>{p.bookingCode}</td>
-                            <td style={{ color: "#64748b", fontSize: ".81rem" }}>{p.hotelName ?? getHotelNameById(p.hotelId)}</td>
-                            <td style={{ fontWeight: 600, color: "#1686cb", fontSize: ".82rem" }}>
-                              {p.roomNumber ? `Phòng ${p.roomNumber}` : `#${p.roomId}`}
+                            <td style={{ color: "#64748b", fontSize: ".81rem", fontFamily: "monospace" }}>{isPlan ? p.transactionId : (p.bookingCode || "—")}</td>
+                            <td style={{ color: "#64748b", fontSize: ".81rem" }}>
+                              {isPlan ? (
+                                <span style={{ fontWeight: 600, color: "#1686cb" }}>Gói: {p.planName ?? "Gói dịch vụ"}</span>
+                              ) : (
+                                <>
+                                  {p.hotelName ?? (p.hotelId ? getHotelNameById(p.hotelId) : "—")} 
+                                  {p.roomId && <span style={{ fontWeight: 600, color: "#1686cb" }}> - Phòng {p.roomNumber ?? p.roomId}</span>}
+                                </>
+                              )}
                             </td>
                             <td style={{ fontWeight: 700, color: "#0f172a", fontSize: ".83rem" }}>
                               {p.amount.toLocaleString("vi-VN")} ₫
@@ -2680,11 +2709,11 @@ const OwnerDashboard: React.FC = () => {
                       </div>
 
                       {([
-                        ["Mã booking",    viewPayment.bookingCode],
-                        ["Tên khách",     viewPayment.guestName ?? "—"],
-                        ["Khách sạn",     viewPayment.hotelName ?? getHotelNameById(viewPayment.hotelId)],
-                        ["Phòng",         viewPayment.roomNumber ? `Phòng ${viewPayment.roomNumber}` : `#${viewPayment.roomId}`],
-                        ["Mã giao dịch",  viewPayment.transactionId || "—"],
+                        ["Loại GD",       viewPayment.type === "PlanSubscription" ? "Mua gói dịch vụ" : "Đặt phòng"],
+                        ["Mã GD / Booking", viewPayment.type === "PlanSubscription" ? viewPayment.transactionId : (viewPayment.bookingCode || "—")],
+                        ["Tên khách",     viewPayment.type === "PlanSubscription" ? (viewPayment.username ?? "—") : (viewPayment.guestName ?? "—")],
+                        ["Dịch vụ",       viewPayment.type === "PlanSubscription" ? (viewPayment.planName ?? "—") : (viewPayment.hotelName ?? (viewPayment.hotelId ? getHotelNameById(viewPayment.hotelId) : "—"))],
+                        ["Phòng",         viewPayment.type === "PlanSubscription" ? "—" : (viewPayment.roomNumber ? `Phòng ${viewPayment.roomNumber}` : (viewPayment.roomId ? `#${viewPayment.roomId}` : "—"))],
                         ["Phương thức",   viewPayment.paymentMethod],
                         ["Ngày TT",       new Date(viewPayment.paymentDate).toLocaleString("vi-VN")],
                       ] as [string, string][]).map(([label, val]) => (

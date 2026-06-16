@@ -4,15 +4,33 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Catkaa.MicroPms.Api.Models
 {
+    public enum PaymentType
+    {
+        RoomBooking,
+        PlanSubscription
+    }
+
     public class Payment
     {
         [Key]
         public int Id { get; set; }
 
-        public int BookingId { get; set; }
+        public PaymentType Type { get; set; } = PaymentType.RoomBooking;
+
+        public int? BookingId { get; set; }
 
         [ForeignKey(nameof(BookingId))]
         public Booking? Booking { get; set; }
+
+        public int? PricingPlanId { get; set; }
+
+        [ForeignKey(nameof(PricingPlanId))]
+        public PricingPlan? PricingPlan { get; set; }
+
+        public int? UserId { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        public User? User { get; set; }
 
         [MaxLength(255)]
         public string TransactionId { get; set; } = string.Empty;

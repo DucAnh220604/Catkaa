@@ -42,11 +42,11 @@ namespace Catkaa.MicroPms.Api.Controllers
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "Admin, Host")]
-        public async Task<IActionResult> GetPayments([FromQuery] int? filterHotelId = null)
+        public async Task<IActionResult> GetPayments([FromQuery] string? type = null, [FromQuery] int? filterHotelId = null)
         {
             try
             {
-                var result = await _paymentService.GetPaymentsAsync(CurrentUserRole, CurrentUserId, filterHotelId);
+                var result = await _paymentService.GetPaymentsAsync(type, CurrentUserRole, CurrentUserId, filterHotelId);
                 if (!result.Success) return Unauthorized(new { message = result.Message });
                 return Ok(result.Data);
             }
@@ -81,13 +81,13 @@ namespace Catkaa.MicroPms.Api.Controllers
         /// </summary>
         [HttpGet("my")]
         [Authorize]
-        public async Task<IActionResult> GetMyPayments()
+        public async Task<IActionResult> GetMyPayments([FromQuery] string? type = null)
         {
             if (CurrentUserId == null)
                 return Unauthorized(new { message = "Chưa đăng nhập" });
             try
             {
-                var result = await _paymentService.GetMyPaymentsAsync(CurrentUserId.Value);
+                var result = await _paymentService.GetMyPaymentsAsync(CurrentUserId.Value, type);
                 return Ok(result.Data);
             }
             catch (System.Exception ex)
@@ -168,6 +168,28 @@ namespace Catkaa.MicroPms.Api.Controllers
                 var result = await _paymentService.MockPaymentAsync(bookingId);
                 if (!result.Success) return BadRequest(new { message = result.Message });
                 return Ok(new { message = "Thanh toán giả lập thành công" });
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [Mock] API giả lập thanh toán thành công mua gói dịch vụ để nâng cấp Host.
+        /// </summary>
+        [HttpPost("mock-plan-payment/{planId}")]
+        [Authorize]
+        public async Task<IActionResult> MockPlanPay(int planId)
+        {
+            if (CurrentUserId == null)
+                return Unauthorized(new { message = "Chưa đăng nhập" });
+                
+            try
+            {
+                var result = await _paymentService.MockPlanPaymentAsync(planId, CurrentUserId.Value);
+                if (!result.Success) return BadRequest(new { message = result.Message });
+                return Ok(result.Data);
             }
             catch (System.Exception ex)
             {

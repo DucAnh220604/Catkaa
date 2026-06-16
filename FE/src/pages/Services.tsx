@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getPricingPlans, PricingPlan } from "../services/pricingService";
 import { getAuthToken, getAuthRole, upgradeToHost, clearAuthToken } from "../services/authService";
+import PaymentService from "../services/paymentService";
 import { Check, ExternalLink, Loader2 } from "lucide-react";
 import { useMessage } from "../components/MessageContext";
 
@@ -63,9 +64,15 @@ const Services: React.FC = () => {
   const handleMockPayment = async (pkg: PricingPlan) => {
     setIsProcessingPayment(true);
     try {
-      const response = await upgradeToHost(pkg.id);
-      notify("Thanh toán thành công! " + (response.message || ""), "success");
+      // Gọi API giả lập mua gói mới thay vì upgradeToHost
+      const response = await PaymentService.mockPlanPayment(pkg.id);
+      notify("Thanh toán thành công! Tài khoản của bạn đã được nâng cấp thành Host.", "success");
+      
+      // Xóa token cũ vì nó đang chứa Role="Guest"
       clearAuthToken();
+      
+      // Đáng lẽ sẽ redirect về /dashboard, nhưng vì Token cũ không qua được xác thực [Authorize(Roles="Host")] 
+      // của Backend, nên bắt buộc phải cho user đăng nhập lại để nhận Token mới.
       setTimeout(() => navigate("/login"), 3000);
     } catch (err: any) {
       notify(err.message || "Có lỗi xảy ra khi thanh toán", "error");

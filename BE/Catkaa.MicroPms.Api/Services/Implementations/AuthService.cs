@@ -19,11 +19,13 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthService(ApplicationDbContext context, IConfiguration configuration)
+        public AuthService(ApplicationDbContext context, IConfiguration configuration, IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         public async Task<ServiceResult<string>> LoginAsync(LoginRequestDto request)
@@ -83,6 +85,21 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    try
+                    {
+                        var subject = "Đăng ký thành công";
+                        var body = $"<p>Chào {user.Username},</p><p>Chúc mừng bạn đã đăng ký thành công tài khoản trên hệ thống StayEase (Catka PMS).</p><p>Vui lòng đăng nhập và bắt đầu trải nghiệm dịch vụ của chúng tôi.</p>";
+                        await _emailService.SendEmailAsync(user.Email, subject, body);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log email error if necessary, but don't fail the registration
+                        Console.WriteLine($"Failed to send welcome email to {user.Email}: {ex.Message}");
+                    }
+                }
 
                 return ServiceResult<object?>.Ok("Registration successful", new { user.Id, user.Username, user.Role });
             }

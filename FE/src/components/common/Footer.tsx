@@ -204,7 +204,7 @@ const Footer: React.FC = () => {
                     paddingBottom: "10px",
                   }}
                 >
-                  Hệ Thống của CATKA
+                  Hệ Thống
                   <span
                     style={{
                       position: "absolute",

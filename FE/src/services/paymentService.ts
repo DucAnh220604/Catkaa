@@ -3,13 +3,18 @@ import { getAuthToken } from './authService';
 
 export interface PaymentRecord {
   id: number;
-  bookingId: number;
-  bookingCode: string;
+  type: string;
+  bookingId?: number;
+  bookingCode?: string;
   guestName?: string;
-  hotelId: number;
+  hotelId?: number;
   hotelName?: string;
-  roomId: number;
+  roomId?: number;
   roomNumber?: string;
+  pricingPlanId?: number;
+  planName?: string;
+  userId?: number;
+  username?: string;
   transactionId: string;
   amount: number;
   status: string;
@@ -18,9 +23,10 @@ export interface PaymentRecord {
 }
 
 class PaymentService {
-  static async getPayments(filterHotelId?: number): Promise<PaymentRecord[]> {
+  static async getPayments(filterHotelId?: number, type?: string): Promise<PaymentRecord[]> {
     const params = new URLSearchParams();
     if (filterHotelId) params.append('filterHotelId', filterHotelId.toString());
+    if (type) params.append('type', type);
 
     const response = await fetch(`${API_BASE_URL}/api/payments?${params}`, {
       headers: { Authorization: `Bearer ${getAuthToken()}` },
@@ -62,6 +68,23 @@ class PaymentService {
     
     const result = await response.json();
     return result.data || {};
+  }
+
+  static async mockPlanPayment(planId: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/api/payments/mock-plan-payment/${planId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getAuthToken()}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Thanh toán giả lập thất bại');
+    }
+    
+    return await response.json();
   }
 }
 

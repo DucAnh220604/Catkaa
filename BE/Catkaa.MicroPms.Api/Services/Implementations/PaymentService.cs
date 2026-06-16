@@ -19,12 +19,14 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly VnPaySettings _vnpSettings;
+        private readonly IEmailService _emailService;
 
-        public PaymentService(ApplicationDbContext context, IConfiguration configuration, IOptions<VnPaySettings> vnpSettings)
+        public PaymentService(ApplicationDbContext context, IConfiguration configuration, IOptions<VnPaySettings> vnpSettings, IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
             _vnpSettings = vnpSettings.Value;
+            _emailService = emailService;
         }
 
         public async Task<ServiceResult<string>> CreatePaymentUrlAsync(int bookingId, int? currentUserId, HttpContext context)
@@ -189,14 +191,24 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             return ServiceResult<object>.Ok("IPN Handled");
         }
 
-        public async Task<ServiceResult<List<PaymentResponseDto>>> GetPaymentsAsync(string role, int? currentUserId, int? filterHotelId)
+        public async Task<ServiceResult<List<PaymentResponseDto>>> GetPaymentsAsync(string? type, string role, int? currentUserId, int? filterHotelId)
         {
             var query = _context.Payments
                 .Include(p => p.Booking)
                     .ThenInclude(b => b!.Hotel)
                 .Include(p => p.Booking)
                     .ThenInclude(b => b!.Room)
+                .Include(p => p.PricingPlan)
+                .Include(p => p.User)
                 .AsQueryable();
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                if (Enum.TryParse<PaymentType>(type, out var paymentType))
+                {
+                    query = query.Where(p => p.Type == paymentType);
+                }
+            }
 
             // Host chỉ thấy payment của khách sạn mình quản lý
             if (role != "Admin")
@@ -214,13 +226,18 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 .Select(p => new PaymentResponseDto
                 {
                     Id = p.Id,
+                    Type = p.Type.ToString(),
                     BookingId = p.BookingId,
-                    BookingCode = p.Booking!.BookingCode,
-                    GuestName = p.Booking.GuestName,
-                    HotelId = p.Booking.HotelId,
-                    HotelName = p.Booking.Hotel != null ? p.Booking.Hotel.Name : null,
-                    RoomId = p.Booking.RoomId,
-                    RoomNumber = p.Booking.Room != null ? p.Booking.Room.RoomNumber : null,
+                    BookingCode = p.Booking != null ? p.Booking.BookingCode : null,
+                    GuestName = p.Booking != null ? p.Booking.GuestName : null,
+                    HotelId = p.Booking != null ? p.Booking.HotelId : null,
+                    HotelName = p.Booking != null && p.Booking.Hotel != null ? p.Booking.Hotel.Name : null,
+                    RoomId = p.Booking != null ? p.Booking.RoomId : null,
+                    RoomNumber = p.Booking != null && p.Booking.Room != null ? p.Booking.Room.RoomNumber : null,
+                    PricingPlanId = p.PricingPlanId,
+                    PlanName = p.PricingPlan != null ? p.PricingPlan.Name : null,
+                    UserId = p.UserId,
+                    Username = p.User != null ? p.User.Username : null,
                     TransactionId = p.TransactionId,
                     Amount = p.Amount,
                     Status = p.Status,
@@ -232,14 +249,26 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
             return ServiceResult<List<PaymentResponseDto>>.Ok("Success", payments);
         }
 
-        public async Task<ServiceResult<List<PaymentResponseDto>>> GetMyPaymentsAsync(int userId)
+        public async Task<ServiceResult<List<PaymentResponseDto>>> GetMyPaymentsAsync(int userId, string? type)
         {
-            var payments = await _context.Payments
+            var query = _context.Payments
                 .Include(p => p.Booking)
                     .ThenInclude(b => b!.Hotel)
                 .Include(p => p.Booking)
                     .ThenInclude(b => b!.Room)
-                .Where(p => p.Booking != null && p.Booking.UserId == userId)
+                .Include(p => p.PricingPlan)
+                .Include(p => p.User)
+                .Where(p => (p.Booking != null && p.Booking.UserId == userId) || p.UserId == userId);
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                if (Enum.TryParse<PaymentType>(type, out var paymentType))
+                {
+                    query = query.Where(p => p.Type == paymentType);
+                }
+            }
+
+            var payments = await query
                 .OrderByDescending(p => p.PaymentDate)
                 .Select(p => new PaymentResponseDto
                 {
@@ -286,13 +315,18 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
                 .Select(p => new PaymentResponseDto
                 {
                     Id = p.Id,
+                    Type = p.Type.ToString(),
                     BookingId = p.BookingId,
-                    BookingCode = p.Booking!.BookingCode,
-                    GuestName = p.Booking.GuestName,
-                    HotelId = p.Booking.HotelId,
-                    HotelName = p.Booking.Hotel != null ? p.Booking.Hotel.Name : null,
-                    RoomId = p.Booking.RoomId,
-                    RoomNumber = p.Booking.Room != null ? p.Booking.Room.RoomNumber : null,
+                    BookingCode = p.Booking != null ? p.Booking.BookingCode : null,
+                    GuestName = p.Booking != null ? p.Booking.GuestName : null,
+                    HotelId = p.Booking != null ? p.Booking.HotelId : null,
+                    HotelName = p.Booking != null && p.Booking.Hotel != null ? p.Booking.Hotel.Name : null,
+                    RoomId = p.Booking != null ? p.Booking.RoomId : null,
+                    RoomNumber = p.Booking != null && p.Booking.Room != null ? p.Booking.Room.RoomNumber : null,
+                    PricingPlanId = p.PricingPlanId,
+                    PlanName = p.PricingPlan != null ? p.PricingPlan.Name : null,
+                    UserId = p.UserId,
+                    Username = p.User != null ? p.User.Username : null,
                     TransactionId = p.TransactionId,
                     Amount = p.Amount,
                     Status = p.Status,
@@ -339,6 +373,7 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
 
             _context.Payments.Add(new Payment
             {
+                Type = PaymentType.RoomBooking,
                 BookingId = booking.Id,
                 TransactionId = "MOCK_" + DateTime.Now.Ticks.ToString(),
                 Amount = totalAmount,
@@ -349,6 +384,70 @@ namespace Catkaa.MicroPms.Api.Services.Implementations
 
             await _context.SaveChangesAsync();
             return ServiceResult<object>.Ok("Mock Payment Successful", new { roomPassword = booking.Room?.RoomPassword });
+        }
+
+        public async Task<ServiceResult<object>> MockPlanPaymentAsync(int planId, int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return ServiceResult<object>.Fail("User not found");
+
+            var plan = await _context.PricingPlans.FindAsync(planId);
+            if (plan == null || !plan.IsActive) return ServiceResult<object>.Fail("Pricing plan not found or inactive");
+
+            var alreadyPaid = await _context.Payments
+                .AnyAsync(p => p.UserId == userId && p.PricingPlanId == planId && p.Status == "Success");
+
+            if (alreadyPaid)
+                return ServiceResult<object>.Ok("Subscription already confirmed");
+
+            decimal amount = 0;
+            var priceStr = new string(plan.Price.Where(char.IsDigit).ToArray());
+            if (decimal.TryParse(priceStr, out var parsed)) amount = parsed;
+
+            _context.Payments.Add(new Payment
+            {
+                Type = PaymentType.PlanSubscription,
+                PricingPlanId = planId,
+                UserId = userId,
+                TransactionId = "MOCK_PLAN_" + DateTime.Now.Ticks.ToString(),
+                Amount = amount,
+                Status = "Success",
+                PaymentDate = DateTime.Now,
+                PaymentMethod = "Mock"
+            });
+
+            if (user.Role != "Admin")
+            {
+                user.Role = "Host";
+            }
+
+            await _context.SaveChangesAsync();
+
+            try
+            {
+                var adminEmail = _configuration["SmtpSettings:SenderEmail"] ?? "catkaofficial@gmail.com";
+                var subject = $"Thông báo: Nâng cấp Host - {plan.Name} - {user.Username}";
+                var body = $@"
+                    <h3>Hệ thống vừa có một người dùng đăng ký gói dịch vụ mới!</h3>
+                    <p><strong>Tài khoản:</strong> {user.Username}</p>
+                    <p><strong>Email đăng ký:</strong> {user.Email}</p>
+                    <p><strong>Gói dịch vụ đã chọn:</strong> {plan.Name} ({plan.Price})</p>
+                    <p>Hệ thống đã tự động nâng cấp quyền Host cho tài khoản này.</p>
+                ";
+                await _emailService.SendEmailAsync(adminEmail, subject, body);
+
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    await _emailService.SendEmailAsync(user.Email, "Nâng cấp thành công", 
+                        $"<p>Chào {user.Username},</p><p>Bạn đã mua gói {plan.Name} thành công. Hãy đăng xuất và đăng nhập lại để sử dụng tính năng Host.</p>");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send upgrade emails: {ex.Message}");
+            }
+
+            return ServiceResult<object>.Ok("Mock Plan Subscription Successful", new { role = user.Role });
         }
     }
 }
