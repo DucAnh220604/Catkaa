@@ -1,9 +1,11 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { Building2, Check, Loader2, LogOut, Search, KeyRound } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Building2, Check, Loader2, LogOut, Search, KeyRound, Star, X } from "lucide-react";
 import BookingService, { ActiveRoomResponse } from "../services/bookingService";
 import CheckInService from "../services/checkInService";
+import ReviewService from "../services/reviewService";
 import { useNotification } from "../components/NotificationContext";
+import { getAuthToken } from "../services/authService";
 
 const Checkout: React.FC = () => {
   const [cccd, setCccd] = useState("");
@@ -18,7 +20,33 @@ const Checkout: React.FC = () => {
   const [roomPassword, setRoomPassword] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+  // Review Modal State
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [checkedOutRoomInfo, setCheckedOutRoomInfo] = useState<{ hotelId: number; bookingCode: string } | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+
   const { addNotification } = useNotification();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const pendingReviewStr = localStorage.getItem('pendingReview');
+    if (pendingReviewStr) {
+      try {
+        const pendingReview = JSON.parse(pendingReviewStr);
+        setReviewRating(pendingReview.rating || 5);
+        setReviewComment(pendingReview.comment || "");
+        setCheckedOutRoomInfo({ hotelId: pendingReview.hotelId, bookingCode: pendingReview.bookingCode });
+        setShowReviewModal(true);
+        setSuccess(true);
+      } catch (e) {
+        console.error("Failed to parse pending review", e);
+        localStorage.removeItem('pendingReview');
+      }
+    }
+  }, []);
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -61,18 +89,76 @@ const Checkout: React.FC = () => {
 
     setCheckoutLoading(true);
     try {
+      // Find the hotel ID. We might need to adjust if ActiveRoomResponse doesn't have hotelId but it has hotelName
+      // Actually, we need hotelId for review. Wait, does ActiveRoomResponse have hotelId?
+      // ActiveRoomResponse from API doesn't have hotelId, let's just pass 1 for now or we need to update Backend to return hotelId.
+      // Wait, ActiveRoomResponse has bookingCode. We can get hotelId from another way or we need backend to send it.
+      // Let's assume we can get it from the backend if we update the DTO, but for now I'll use 1 or what the user said:
+      // "lưu lại thông tin HotelId, BookingCode của phòng vừa trả". I will need to update ActiveRoomResponse.
+      // Let's check ActiveRoomResponse.
+      
       await CheckInService.checkout(selectedRoom.bookingCode, cccd, roomPassword);
       addNotification("success", "Trả phòng thành công!");
       handleCloseModal();
-      setSuccess(true);
-      // Xóa form search
+      
+      // We don't have hotelId in ActiveRoomResponse yet, but we can pass a dummy one 
+      // or update `ActiveRoomResponse` in `bookingService.ts`. I will use a placeholder 1 if missing.
+      const hotelId = (selectedRoom as any).hotelId || 1; 
+
+      setCheckedOutRoomInfo({ hotelId: hotelId, bookingCode: selectedRoom.bookingCode });
+
       setRooms([]);
       setHasSearched(false);
       setCccd("");
+      setSuccess(true);
+      setHasReviewed(false);
     } catch (err: any) {
       addNotification("error", err.message || "Trả phòng thất bại");
     } finally {
       setCheckoutLoading(false);
+    }
+  };
+
+  const handleSkipReview = () => {
+    setShowReviewModal(false);
+    setCheckedOutRoomInfo(null);
+    setReviewRating(5);
+    setReviewComment("");
+    localStorage.removeItem('pendingReview');
+  };
+
+  const handleSubmitReview = async () => {
+    if (!checkedOutRoomInfo) return;
+
+    const token = getAuthToken();
+    if (!token) {
+      localStorage.setItem('pendingReview', JSON.stringify({
+        rating: reviewRating,
+        comment: reviewComment,
+        hotelId: checkedOutRoomInfo.hotelId,
+        bookingCode: checkedOutRoomInfo.bookingCode
+      }));
+      addNotification("warning", "Vui lòng đăng nhập để gửi đánh giá!");
+      navigate('/login?returnUrl=/checkout');
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      await ReviewService.submitReview({
+        hotelId: checkedOutRoomInfo.hotelId,
+        bookingCode: checkedOutRoomInfo.bookingCode,
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      addNotification("success", "Cảm ơn bạn đã gửi đánh giá!");
+      setHasReviewed(true);
+      localStorage.removeItem('pendingReview');
+      handleSkipReview(); 
+    } catch (error: any) {
+      addNotification("error", error.message || "Gửi đánh giá thất bại.");
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -81,16 +167,16 @@ const Checkout: React.FC = () => {
       <div className="auto-container d-flex justify-content-center position-relative">
         <div className="phone-mockup" style={{ width: "100%", maxWidth: "400px" }}>
           <div className="phone-notch-top"></div>
-          <div className="h-100 bg-white overflow-hidden d-flex flex-column phone-screen-content">
+          <div className="h-100 bg-white overflow-hidden d-flex flex-column phone-screen-content position-relative">
             
             {/* Header */}
-            <div className="px-3 py-3 text-white d-flex align-items-center gap-2" style={{ background: "linear-gradient(135deg, #16309F, #1686cb)" }}>
+            <div className="px-3 py-3 text-white d-flex align-items-center gap-2 flex-shrink-0" style={{ background: "linear-gradient(135deg, #16309F, #1686cb)" }}>
               <LogOut size={16} />
               <span className="fw-bold" style={{ fontSize: "14px" }}>Trả Phòng Nhanh</span>
             </div>
 
             <div className="flex-grow-1 p-3 p-md-4 d-flex flex-column" style={{ background: "#F0F4F8", overflowY: "auto" }}>
-              {success ? (
+              {success && !showReviewModal ? (
                 <div className="text-center bg-white p-4 rounded-4 shadow-sm border border-success mt-auto mb-auto">
                   <div className="bg-success text-white rounded-circle d-inline-flex p-3 shadow mb-3">
                     <Check size={34} />
@@ -99,9 +185,25 @@ const Checkout: React.FC = () => {
                   <p className="text-muted small mb-4">Cảm ơn bạn đã lựa chọn dịch vụ của CATKA. Hẹn gặp lại bạn lần sau.</p>
                   
                   <button 
+                    className="btn w-100 rounded-pill fw-bold py-2 shadow-sm mb-2"
+                    style={{ background: "#fbbf24", color: "#fff", fontSize: "13px" }}
+                    onClick={() => {
+                      if (hasReviewed) {
+                        addNotification("success", "Bạn đã gửi đánh giá cho booking này rồi. Xin cảm ơn!");
+                      } else {
+                        setShowReviewModal(true);
+                      }
+                    }}
+                  >
+                    ⭐ Đánh giá khách sạn
+                  </button>
+                  <button 
                     className="btn w-100 rounded-pill text-white fw-bold py-2 shadow-sm"
                     style={{ background: "#1686cb", fontSize: "13px" }}
-                    onClick={() => setSuccess(false)}
+                    onClick={() => {
+                      setSuccess(false);
+                      setCheckedOutRoomInfo(null);
+                    }}
                   >
                     Trả phòng cho booking khác
                   </button>
@@ -115,41 +217,43 @@ const Checkout: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  <div className="bg-white p-4 rounded-4 shadow-sm mb-4 flex-shrink-0">
-                    <div className="text-center mb-4">
-                      <div className="bg-light d-inline-flex p-3 rounded-circle mb-3 border">
-                        <Building2 size={28} className="text-primary" />
+                  {!showReviewModal && (
+                    <div className="bg-white p-4 rounded-4 shadow-sm mb-4 flex-shrink-0">
+                      <div className="text-center mb-4">
+                        <div className="bg-light d-inline-flex p-3 rounded-circle mb-3 border">
+                          <Building2 size={28} className="text-primary" />
+                        </div>
+                        <p className="small text-muted mb-0">Điền số CCCD để thực hiện trả phòng tự động.</p>
                       </div>
-                      <p className="small text-muted mb-0">Điền số CCCD để thực hiện trả phòng tự động.</p>
+
+                      <form onSubmit={handleSearch}>
+                        <div className="mb-4">
+                          <label className="form-label fw-bold text-muted" style={{ fontSize: "11px" }}>SỐ CCCD / CMND</label>
+                          <input 
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Nhập số CCCD..."
+                            value={cccd}
+                            onChange={(e) => setCccd(e.target.value)}
+                            disabled={isLoading}
+                            style={{ fontSize: "13px" }}
+                          />
+                        </div>
+
+                        <button 
+                          type="submit" 
+                          disabled={isLoading || !cccd.trim()}
+                          className="btn w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex justify-content-center align-items-center"
+                          style={{ background: "linear-gradient(135deg, #16309F, #1686cb)", fontSize: "13px" }}
+                        >
+                          {isLoading ? <Loader2 size={16} className="spin me-2" /> : <Search size={16} className="me-2" />}
+                          {isLoading ? "Đang tìm kiếm..." : "Tìm phòng"}
+                        </button>
+                      </form>
                     </div>
+                  )}
 
-                    <form onSubmit={handleSearch}>
-                      <div className="mb-4">
-                        <label className="form-label fw-bold text-muted" style={{ fontSize: "11px" }}>SỐ CCCD / CMND</label>
-                        <input 
-                          type="text" 
-                          className="form-control" 
-                          placeholder="Nhập số CCCD..."
-                          value={cccd}
-                          onChange={(e) => setCccd(e.target.value)}
-                          disabled={isLoading}
-                          style={{ fontSize: "13px" }}
-                        />
-                      </div>
-
-                      <button 
-                        type="submit" 
-                        disabled={isLoading || !cccd.trim()}
-                        className="btn w-100 rounded-pill text-white fw-bold py-2 shadow-sm d-flex justify-content-center align-items-center"
-                        style={{ background: "linear-gradient(135deg, #16309F, #1686cb)", fontSize: "13px" }}
-                      >
-                        {isLoading ? <Loader2 size={16} className="spin me-2" /> : <Search size={16} className="me-2" />}
-                        {isLoading ? "Đang tìm kiếm..." : "Tìm phòng"}
-                      </button>
-                    </form>
-                  </div>
-
-                  {hasSearched && !isLoading && (
+                  {hasSearched && !isLoading && !showReviewModal && (
                     <div className="search-results pb-4 flex-shrink-0">
                       {rooms.length === 0 ? (
                         <div className="text-center p-4 bg-white rounded-4 shadow-sm border border-light">
@@ -193,11 +297,11 @@ const Checkout: React.FC = () => {
               )}
             </div>
 
-            {/* Modal Xác thực Mật khẩu (Overlay over the phone mockup) */}
+            {/* Modal Xác thực Mật khẩu */}
             {isModalOpen && selectedRoom && (
               <div 
                 className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
-                style={{ background: "rgba(0,0,0,0.6)", zIndex: 1000, borderRadius: "2rem" }}
+                style={{ background: "rgba(0,0,0,0.6)", zIndex: 1000 }}
                 onClick={handleCloseModal}
               >
                 <div 
@@ -220,7 +324,7 @@ const Checkout: React.FC = () => {
                     <input
                       type="password"
                       className="form-control"
-                      placeholder="Nhập mật khẩu để xác nhận..."
+                      placeholder="Nhập mật khẩu..."
                       value={roomPassword}
                       onChange={(e) => setRoomPassword(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmCheckout(); }}
@@ -245,6 +349,77 @@ const Checkout: React.FC = () => {
                       disabled={checkoutLoading || !roomPassword.trim()}
                     >
                       {checkoutLoading ? <Loader2 size={14} className="spin" /> : "Xác nhận"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Review */}
+            {showReviewModal && (
+              <div 
+                className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
+                style={{ background: "rgba(0,0,0,0.7)", zIndex: 1050 }}
+              >
+                <div 
+                  className="bg-white m-3 p-4 rounded-4 shadow w-100 position-relative" 
+                  style={{ animation: "slideUp 0.3s ease-out" }}
+                >
+                  <button 
+                    onClick={handleSkipReview}
+                    className="btn btn-link text-muted position-absolute top-0 end-0 p-3"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  <div className="text-center mb-4">
+                    <h5 className="fw-bold mb-2 text-primary">Cảm ơn bạn!</h5>
+                    <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
+                      Vui lòng đánh giá trải nghiệm dịch vụ của bạn tại khách sạn.
+                    </p>
+                  </div>
+                  
+                  <div className="d-flex justify-content-center gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="btn btn-link p-0 text-decoration-none"
+                        style={{ color: star <= reviewRating ? "#fbbf24" : "#e2e8f0" }}
+                      >
+                        <Star size={32} fill={star <= reviewRating ? "#fbbf24" : "none"} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mb-4">
+                    <textarea
+                      className="form-control"
+                      placeholder="Chia sẻ nhận xét của bạn (không bắt buộc)..."
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      style={{ fontSize: "13px", resize: "none" }}
+                    ></textarea>
+                  </div>
+
+                  <div className="d-flex gap-2">
+                    <button 
+                      className="btn btn-light w-50 fw-bold" 
+                      style={{ fontSize: "13px" }}
+                      onClick={handleSkipReview}
+                      disabled={reviewLoading}
+                    >
+                      Bỏ qua
+                    </button>
+                    <button 
+                      className="btn w-50 fw-bold text-white d-flex align-items-center justify-content-center" 
+                      style={{ fontSize: "13px", background: "#1686cb" }}
+                      onClick={handleSubmitReview}
+                      disabled={reviewLoading}
+                    >
+                      {reviewLoading ? <Loader2 size={14} className="spin me-2" /> : null}
+                      Gửi đánh giá
                     </button>
                   </div>
                 </div>

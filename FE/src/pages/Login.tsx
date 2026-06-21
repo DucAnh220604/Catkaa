@@ -261,7 +261,7 @@ const Login: React.FC = () => {
             <p className="text-muted" style={{ fontSize: "12px" }}>
               Chưa có tài khoản?{" "}
               <Link
-                to="/register"
+                to={returnUrl ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register"}
                 className="text-primary fw-bold text-decoration-none"
               >
                 Đăng ký ngay

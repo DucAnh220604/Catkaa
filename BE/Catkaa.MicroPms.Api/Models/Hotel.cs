@@ -34,5 +34,6 @@ namespace Catkaa.MicroPms.Api.Models
         public ICollection<CheckInRecord> CheckInRecords { get; set; } = new List<CheckInRecord>();
         public ICollection<Room> Rooms { get; set; } = new List<Room>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }
